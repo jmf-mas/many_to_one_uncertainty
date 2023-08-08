@@ -1,4 +1,4 @@
-# cuq-ae-redm: a Framework for uncertainty quantification on AEs-based methods for anomaly detection
+# many_to_one_uncertainty: a deep learning model to predict an ensemble-like uncertainty from a single member for anomaly detection
 > usage: run.py [-h] [-t] [-p] [-b [BATCH_SIZE]] [-l [LEARNING_RATE]] [-w [WEIGHT_DECAY]] [-m [MOMENTUM]] [-e [EPOCHS]]
 
 > optional arguments:

@@ -57,37 +57,6 @@ def model_train(model, X_loader, l_r = 1e-2, w_d = 1e-5, n_epochs = 1, batch_siz
         print("epoch {}: {}".format(epoch+1, sum(epoch_loss)/len(epoch_loss)))
     if save_errors:
         np.savetxt(output_directory+"_training_loss_"+model.name+file_extension, errors, delimiter=',')
-
-def vae_train(model, X_loader, l_r = 1e-2, w_d = 1e-5, n_epochs = 1, batch_size = 32, save_errors = True):
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    model.to(device)
-    criterion = nn.BCELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=l_r, weight_decay=w_d)
-    errors = []
-    for epoch in tqdm(range(n_epochs)):
-        epoch_loss = []
-        for step, batch in enumerate(X_loader):
-            x_in = batch.type(torch.float32)
-            x_in = x_in.to(device)
-    
-            x_out, mu, logvar = model(x_in)
-            loss = criterion(x_out, x_in)
-            
-            # Compute the KL divergence loss
-            kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-            total_loss = loss + kl_loss
-            
-            # Backpropagate the gradients and update the model weights
-            optimizer.zero_grad()
-            total_loss.backward()
-            optimizer.step()
-            epoch_loss.append(total_loss.item())
-            
-            # Print the loss values
-        errors.append(sum(epoch_loss)/len(epoch_loss))
-        print(f"Epoch {epoch}: reconstruction_loss = {loss:.4f}, kl_loss = {kl_loss:.4f}, total_loss = {total_loss:.4f}")
-    if save_errors:
-        np.savetxt(output_directory+"_training_loss_"+model.name+file_extension, errors, delimiter=',')
             
 def model_eval(model, x):
     loss_fn = nn.MSELoss()
