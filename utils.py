@@ -1,5 +1,5 @@
 from models.ae import AE
-from models.utils import model_train
+from models.utils import ae_train, mlp_train
 import torch
 import torch.nn as nn
 import numpy as np
@@ -61,7 +61,7 @@ def train(batch_size = 32, lr = 1e-5, w_d = 1e-5, momentum = 0.9, epochs = 5):
             print("training for ae_model_"+str(single))
             model_name = "ae_model_"+config+"_"+str(single)
             ae_model = AE(X_train.shape[1], model_name)
-            model_train(ae_model, X_train, l_r = lr, w_d = w_d, n_epochs = epochs, batch_size = batch_size)
+            ae_train(ae_model, X_train, l_r = lr, w_d = w_d, n_epochs = epochs, batch_size = batch_size)
             ae_model.save()
             save_val_scores(ae_model, criterions[single], config, X_val, y_val)
             print("training for ae_model_"+str(single)+" done")

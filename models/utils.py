@@ -36,7 +36,7 @@ class Train_Loader(Loader):
                        index_col=False
                        )
 
-def model_train(model, X_loader, l_r = 1e-2, w_d = 1e-5, n_epochs = 1, batch_size = 32, save_errors = True):
+def ae_train(model, X_loader, l_r = 1e-2, w_d = 1e-5, n_epochs = 1, batch_size = 32, save_errors = True):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     model.to(device)
     optimizer = torch.optim.SGD(model.parameters(), lr=l_r, weight_decay=w_d)
@@ -60,7 +60,7 @@ def model_train(model, X_loader, l_r = 1e-2, w_d = 1e-5, n_epochs = 1, batch_siz
     if save_errors:
         np.savetxt(output_directory+"_training_loss_"+model.name+file_extension, errors, delimiter=',')
 
-def regressor_train(model, X_train, y_train, X_test, y_test, l_r = 1e-2, w_d = 1e-5, n_epochs = 1, batch_size = 32, save_errors = True):
+def mlp_train(model, X_train, y_train, X_test, y_test, l_r = 1e-2, w_d = 1e-5, n_epochs = 1, batch_size = 32, save_errors = True):
     # training parameters
     X_train = torch.tensor(X_train, dtype=torch.float32)
     y_train = torch.tensor(y_train, dtype=torch.float32).reshape(-1, 1)
