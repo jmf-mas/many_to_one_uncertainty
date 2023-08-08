@@ -80,8 +80,8 @@ def evaluate():
     selection = np.random.choice(n, size = 70000, replace=False)
     np.savetxt(directory_output + "_selection_ids.csv", selection)
     configs = {kdd: XY_kdd_test,
-             nsl: XY_nsl_test,
-              ids: XY_ids_test[selection]}
+               nsl: XY_nsl_test,
+               ids: XY_ids_test[selection]}
     
     for config in configs:
         print("evaluating "+config+" data set")

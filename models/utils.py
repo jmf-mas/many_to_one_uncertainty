@@ -6,6 +6,8 @@ import pickle
 from pathlib import Path
 from sklearn import metrics as sk_metrics
 from tqdm import tqdm
+import torch.optim as optim
+import copy
 
 file_extension = ".csv"
 parent_name ="checkpoints/"
@@ -57,6 +59,54 @@ def model_train(model, X_loader, l_r = 1e-2, w_d = 1e-5, n_epochs = 1, batch_siz
         print("epoch {}: {}".format(epoch+1, sum(epoch_loss)/len(epoch_loss)))
     if save_errors:
         np.savetxt(output_directory+"_training_loss_"+model.name+file_extension, errors, delimiter=',')
+
+def regressor_train(model, X_train, y_train, X_test, y_test, l_r = 1e-2, w_d = 1e-5, n_epochs = 1, batch_size = 32, save_errors = True):
+    # training parameters
+    X_train = torch.tensor(X_train, dtype=torch.float32)
+    y_train = torch.tensor(y_train, dtype=torch.float32).reshape(-1, 1)
+    X_test = torch.tensor(X_test, dtype=torch.float32)
+    y_test = torch.tensor(y_test, dtype=torch.float32).reshape(-1, 1)
+    batch_start = torch.arange(0, len(X_train), batch_size)
+     
+    # Hold the best model
+    best_mse = np.inf   # init to infinity
+    best_weights = None
+    history = []
+    
+    loss_fn = nn.MSELoss()  # mean square error
+    optimizer = optim.Adam(model.regressor.parameters(), lr=0.0001)
+     
+    # training loop
+    for epoch in range(n_epochs):
+        model.train()
+        with tqdm.tqdm(batch_start, unit="batch", mininterval=0, disable=True) as bar:
+            bar.set_description(f"Epoch {epoch}")
+            for start in bar:
+                # take a batch
+                X_batch = X_train[start:start+batch_size]
+                y_batch = y_train[start:start+batch_size]
+                # forward pass
+                y_pred = model(X_batch)
+                loss = loss_fn(y_pred, y_batch)
+                # backward pass
+                optimizer.zero_grad()
+                loss.backward()
+                # update weights
+                optimizer.step()
+                # print progress
+                bar.set_postfix(mse=float(loss))
+        # evaluate accuracy at end of each epoch
+        model.eval()
+        y_pred = model(X_test)
+        mse = loss_fn(y_pred, y_test)
+        mse = float(mse)
+        history.append(mse)
+        if mse < best_mse:
+            best_mse = mse
+            best_weights = copy.deepcopy(model.state_dict())
+     
+    # restore model and return best accuracy
+    model.load_state_dict(best_weights)
             
 def model_eval(model, x):
     loss_fn = nn.MSELoss()
