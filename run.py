@@ -1,4 +1,4 @@
-from utils import train, evaluate
+from utils import train_ae, build_latent_representation
 from pathlib import Path
 import argparse
 from data_processing import process_raw_data, split_and_save_data
@@ -22,8 +22,8 @@ def run(batch_size, lr, w_d, momentum, epochs, is_train, to_process_data):
         
     if is_train:
         init()
-        train(batch_size, lr, w_d, momentum, epochs)
-    evaluate()
+        train_ae(batch_size, lr, w_d, momentum, epochs)
+    build_latent_representation()
 
 if __name__ == "__main__":
    parser = argparse.ArgumentParser(description="CUQ-AE-REDM Framework for uncertainty quantification on AEs-based methods for anomaly detection",
