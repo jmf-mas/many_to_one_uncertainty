@@ -8,13 +8,13 @@ class MLP(nn.Module):
         super(MLP, self).__init__()
         
         self.regressor = nn.Sequential(
-            nn.Linear(in_dim, 24),
+            nn.Linear(in_dim, 8),
             nn.ReLU(),
-            nn.Linear(24, 12),
+            nn.Linear(8, 6),
             nn.ReLU(),
-            nn.Linear(12, 6),
+            nn.Linear(6, 3),
             nn.ReLU(),
-            nn.Linear(6, 1)
+            nn.Linear(3, 1)
         )
         self.name = name
     

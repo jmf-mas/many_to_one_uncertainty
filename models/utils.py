@@ -8,6 +8,7 @@ from sklearn import metrics as sk_metrics
 from tqdm import tqdm
 import torch.optim as optim
 import copy
+import matplotlib.pyplot as plt
 
 file_extension = ".csv"
 parent_name ="checkpoints/"
@@ -107,6 +108,10 @@ def mlp_train(model, X_train, y_train, X_val, y_val, l_r = 1e-2, w_d = 1e-5, n_e
      
     # restore model and return best accuracy
     model.load_state_dict(best_weights)
+    print("MSE: %.5f" % best_mse)
+    print("RMSE: %.5f" % np.sqrt(best_mse))
+    plt.plot(history)
+    plt.show()
             
 def model_eval(model, x):
     loss_fn = nn.MSELoss()

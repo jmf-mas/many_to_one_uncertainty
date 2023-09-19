@@ -26,5 +26,6 @@
 
 > example of use
 ```
+python run.py -t -p
 python run.py -s -r
 ```
