@@ -5,6 +5,8 @@ import torch
 import torch.nn as nn
 import numpy as np
 from models.utils import estimate_optimal_threshold
+from scipy.stats import norm
+from scipy.stats import entropy
 
 directory_model = "checkpoints/"
 directory_data = "data/"
@@ -15,6 +17,7 @@ nsl = "nsl"
 ids = "ids"
 sample_size = 5
 criterions = [nn.MSELoss()]*(sample_size + 1) + [nn.BCELoss()]
+metrics = {"std":-2, "ent":-1}
 
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -36,6 +39,15 @@ def save_test_scores(model, criterion, config, X_test, y_test, eta):
 def get_scores(model, criterion, X):
     scores = [criterion(model(x_in.to(device))[0], x_in.to(device)).item() for x_in in X]
     return scores
+
+def get_entropies(model, criterion, eta, X):
+    scores = [criterion(model(x_in.to(device))[0], x_in.to(device)).item() for x_in in X]
+    std_score = np.std(scores)
+    pi = lambda x: norm.cdf(x, loc=eta, scale=std_score)
+    entropies = [entropy([pi(score), 1-pi(score)]) for score in scores]
+    return entropies
+    
+
 
 def get_latent_repr(model, criterion, X):
     rep = [model.enc(x_in.to(device)).detach().numpy() for x_in in X]
@@ -82,8 +94,7 @@ def train_ae(batch_size = 32, lr = 1e-5, w_d = 1e-5, momentum = 0.9, epochs = 5)
             ae_train(ae_model, X_train, l_r = lr, w_d = w_d, n_epochs = epochs, batch_size = batch_size)
             ae_model.save()
             save_val_scores(ae_model, criterions[single], config, X_val, y_val)
-            print("training for ae_model_"+str(single)+" done")
-            
+            print("training for ae_model_"+str(single)+" done")   
         print("---------------------------------------------------------------------")
 
     
@@ -118,6 +129,7 @@ def evaluate_ae():
             ae_model.to(device)
             save_test_scores(ae_model, criterions[single], config, X_test, y_test, eta)
             print("evaluation for ae_model_"+str(single)+" done")
+            print("---------------------------------------------------------------------")
         print("evaluating "+config+" data set done")
 
 
@@ -170,15 +182,20 @@ def build_latent_representation():
             X = torch.from_numpy(X)
                 
             scores = []
+            entropies = []
             for single in range(sample_size):
                 print("evaluation for ae_model_"+str(single))
                 model_name = "ae_model_"+config+"_"+str(single)
                 ae_model = AE(X.shape[1], model_name)
+                eta = np.loadtxt(directory_output + config + "_threshold_" + model_name + ".csv")
                 ae_model.load()
                 ae_model.to(device)
                 scores.append(get_scores(ae_model, criterions[single], X))
+                entropies.append(get_entropies(ae_model, criterions[single], eta, X))
             scores = np.array(scores)
+            entropies = np.array(entropies)
             std_scores = np.std(scores, axis=0)
+            mean_entropies = np.std(entropies, axis=0)
             # create latent representation with the randomly selected model
             selected_model_name = "ae_model_"+config+"_"+str(selected_model_id)
             selected_ae_model = AE(X.shape[1], selected_model_name)
@@ -187,6 +204,7 @@ def build_latent_representation():
             
             latent_rep = get_latent_repr(selected_ae_model, criterions[selected_model_id], X)
             latent_rep = np.concatenate((latent_rep, std_scores.reshape(-1, 1)), axis=1)
+            latent_rep = np.concatenate((latent_rep, mean_entropies.reshape(-1, 1)), axis=1)
             np.savetxt(directory_data + config + "_" + configs + "_latent.csv", latent_rep, delimiter=',')
             print("evaluating "+configs+" data set done")
             
@@ -208,21 +226,21 @@ def train_mlp(batch_size = 32, lr = 1e-5, w_d = 1e-5, momentum = 0.9, epochs = 5
               ids: [XY_ids_train, XY_ids_val]}
     
     
-    for config in configs:
-        print("training on "+config+" data set")
-        XY_train, XY_val = configs[config]
-        X_train, y_train = XY_train[:, :-1], XY_train[:, -1]
-        X_val, y_val = XY_val[:, :-1], XY_val[:, -1]
-        
-        X_val = X_val.astype('float32')
-        X_train = X_train.astype('float32')
-        X_train = torch.from_numpy(X_train)
-        X_val = torch.from_numpy(X_val)
-        mlp_model = MLP(X_train.shape[1], model_reg_name)
-        mlp_train(mlp_model, X_train, y_train, X_val, y_val, l_r = lr, w_d = w_d, n_epochs = epochs, batch_size = batch_size)
-        mlp_model.save()
-        print("training for mlp_model on " + config + " data set done")
+    for metric in metrics:
+        for config in configs:
+            print("training on "+config+" data set")
+            XY_train, XY_val = configs[config]
+            X_train, y_train = XY_train[:, :-2], XY_train[:, metrics[metric]]
+            X_val, y_val = XY_val[:, :-2], XY_val[:, metrics[metric]]
             
+            X_val = X_val.astype('float32')
+            X_train = X_train.astype('float32')
+            X_train = torch.from_numpy(X_train)
+            X_val = torch.from_numpy(X_val)
+            mlp_model = MLP(X_train.shape[1], model_reg_name + metric)
+            mlp_train(mlp_model, X_train, y_train, X_val, y_val, l_r = lr, w_d = w_d, n_epochs = epochs, batch_size = batch_size)
+            mlp_model.save()
+            print("training for mlp_model on " + config + " data set done for metric "+metric)
         print("---------------------------------------------------------------------")
             
 def evaluate_mlp():
@@ -243,29 +261,29 @@ def evaluate_mlp():
               nsl: [XY_nsl_train, XY_nsl_val, XY_nsl_test],
               ids: [XY_ids_train, XY_ids_val, XY_ids_test]}
     
+    for metric in metrics:
+        for config in configs:
+            print("evaluating "+config+" data set")
+            XY_train, XY_val, XY_test = configs[config]
+            X_train = XY_train[:, :-2]
+            X_val = XY_val[:, :-2]
+            X_test = XY_test[:, :-2]
+            X_train = X_train.astype('float32')
+            X_val = X_val.astype('float32')
+            X_test = X_test.astype('float32')
+            X_train = torch.from_numpy(X_train)
+            X_val = torch.from_numpy(X_val)
+            X_test = torch.from_numpy(X_test)
+           
+            mlp_model = MLP(X_train.shape[1], model_reg_name + metric)
+            mlp_model.load()
+            mlp_model.to(device)
+            
+            save_uncertainty(mlp_model, config, X_train, label="train_" + metric)
+            save_uncertainty(mlp_model, config, X_val, label="val_" + metric)
+            save_uncertainty(mlp_model, config, X_test, label="test_" + metric)
     
-    for config in configs:
-        print("evaluating "+config+" data set")
-        XY_train, XY_val, XY_test = configs[config]
-        X_train = XY_train[:, :-1]
-        X_val = XY_val[:, :-1]
-        X_test = XY_test[:, :-1]
-        X_train = X_train.astype('float32')
-        X_val = X_val.astype('float32')
-        X_test = X_test.astype('float32')
-        X_train = torch.from_numpy(X_train)
-        X_val = torch.from_numpy(X_val)
-        X_test = torch.from_numpy(X_test)
-       
-        mlp_model = MLP(X_train.shape[1], model_reg_name)
-        mlp_model.load()
-        mlp_model.to(device)
-        
-        save_uncertainty(mlp_model, config, X_train, label="train")
-        save_uncertainty(mlp_model, config, X_val, label="val")
-        save_uncertainty(mlp_model, config, X_test, label="test")
-
-        print("evaluating for mlp model on "+config+" data set done")
+            print("evaluating for mlp model on "+config+" data set done for metric " + metric)
 
 
 
