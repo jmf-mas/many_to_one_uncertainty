@@ -3,9 +3,13 @@
 
 > optional arguments:
 
->> -h, --help            show this help message and exit
+>>  -h, --help            show this help message and exit
 >> 
->> -t, --is_train        training mode (default: False)
+>>  -t, --is_train        training mode (default: False)
+>> 
+>>  -s, --reg_stage       regression stage (default: False)
+>> 
+>>  -r, --is_train_mlp    mlp training mode (default: False)
 >> 
 >>  -p, --to_process_data process data (default: False)
 >> 
@@ -22,5 +26,5 @@
 
 > example of use
 ```
-python run.py -t -p
+python run.py -s -r
 ```
