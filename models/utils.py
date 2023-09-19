@@ -60,12 +60,12 @@ def ae_train(model, X_loader, l_r = 1e-2, w_d = 1e-5, n_epochs = 1, batch_size =
     if save_errors:
         np.savetxt(output_directory+"_training_loss_"+model.name+file_extension, errors, delimiter=',')
 
-def mlp_train(model, X_train, y_train, X_test, y_test, l_r = 1e-2, w_d = 1e-5, n_epochs = 1, batch_size = 32, save_errors = True):
+def mlp_train(model, X_train, y_train, X_val, y_val, l_r = 1e-2, w_d = 1e-5, n_epochs = 1, batch_size = 32, save_errors = True):
     # training parameters
     X_train = torch.tensor(X_train, dtype=torch.float32)
     y_train = torch.tensor(y_train, dtype=torch.float32).reshape(-1, 1)
-    X_test = torch.tensor(X_test, dtype=torch.float32)
-    y_test = torch.tensor(y_test, dtype=torch.float32).reshape(-1, 1)
+    X_val = torch.tensor(X_val, dtype=torch.float32)
+    y_val = torch.tensor(y_val, dtype=torch.float32).reshape(-1, 1)
     batch_start = torch.arange(0, len(X_train), batch_size)
      
     # Hold the best model
@@ -97,8 +97,8 @@ def mlp_train(model, X_train, y_train, X_test, y_test, l_r = 1e-2, w_d = 1e-5, n
                 bar.set_postfix(mse=float(loss))
         # evaluate accuracy at end of each epoch
         model.eval()
-        y_pred = model(X_test)
-        mse = loss_fn(y_pred, y_test)
+        y_pred = model(X_val)
+        mse = loss_fn(y_pred, y_val)
         mse = float(mse)
         history.append(mse)
         if mse < best_mse:

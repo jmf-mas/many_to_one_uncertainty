@@ -1,4 +1,5 @@
 from models.ae import AE
+from models.mlp import MLP
 from models.utils import ae_train, mlp_train
 import torch
 import torch.nn as nn
@@ -8,10 +9,11 @@ from models.utils import estimate_optimal_threshold
 directory_model = "checkpoints/"
 directory_data = "data/"
 directory_output = "outputs/"
+model_reg_name = "mlp_regressor"
 kdd = "kdd"
 nsl = "nsl"
 ids = "ids"
-sample_size = 15
+sample_size = 5
 criterions = [nn.MSELoss()]*(sample_size + 1) + [nn.BCELoss()]
 
 
@@ -40,6 +42,10 @@ def get_latent_repr(model, criterion, X):
     score = [criterion(model(x_in.to(device))[0], x_in.to(device)).item() for x_in in X]
     latent_rep = np.concatenate((rep, score.reshape(-1, 1)), axis=1)
     return latent_rep
+
+def save_uncertainty(model, config, X, label="train"):
+    preds = [model(x_in.to(device))[0].numpy() for x_in in X]
+    np.savetxt(directory_output + config + "_pred_" + label + ".csv", preds)
  
 
 def train_ae(batch_size = 32, lr = 1e-5, w_d = 1e-5, momentum = 0.9, epochs = 5):
@@ -112,6 +118,7 @@ def evaluate_ae():
             print("evaluation for ae_model_"+str(single)+" done")
         print("evaluating "+config+" data set done")
 
+
 def build_latent_representation():
     
     X_kdd_train = np.loadtxt(directory_data+"kdd_train.csv", delimiter=',')
@@ -162,7 +169,6 @@ def build_latent_representation():
             X = torch.from_numpy(X)
                 
             scores = []
-            print("evaluation for EDL")
             for single in range(sample_size):
                 print("evaluation for ae_model_"+str(single))
                 model_name = "ae_model_"+config+"_"+str(single)
@@ -180,8 +186,85 @@ def build_latent_representation():
             
             latent_rep = get_latent_repr(selected_ae_model, criterions[single], X)
             latent_rep = np.concatenate((latent_rep, std_scores.reshape(-1, 1)), axis=1)
-            np.savetxt(directory_output + config + "_" + configs + "_latent.csv", latent_rep)
+            np.savetxt(directory_data + config + "_" + configs + "_latent.csv", latent_rep)
             print("evaluating "+configs+" data set done")
+            
+def train_mlp(batch_size = 32, lr = 1e-5, w_d = 1e-5, momentum = 0.9, epochs = 5):
+    
+    XY_kdd_train = np.loadtxt(directory_data + kdd + "_train_latent.csv", delimiter=',')
+    XY_kdd_val = np.loadtxt(directory_data + kdd + "_val_latent.csv", delimiter=',')
+
+    
+    XY_nsl_train = np.loadtxt(directory_data + nsl + "_train_latent.csv", delimiter=',')
+    XY_nsl_val = np.loadtxt(directory_data + nsl + "_val_latent.csv", delimiter=',')
+    
+    XY_ids_train = np.loadtxt(directory_data + ids + "_train_latent.csv", delimiter=',')
+    XY_ids_val = np.loadtxt(directory_data + ids +"_val_latent.csv", delimiter=',')
+
+    
+    configs = {kdd: [XY_kdd_train, XY_kdd_val],
+              nsl: [XY_nsl_train, XY_nsl_val],
+              ids: [XY_ids_train, XY_ids_val]}
+    
+    
+    for config in configs:
+        print("training on "+config+" data set")
+        XY_train, XY_val = configs[config]
+        X_train, y_train = XY_train[:, :-1], XY_train[:, -1]
+        X_val, y_val = XY_val[:, :-1], XY_val[:, -1]
+        
+        X_val = X_val.astype('float32')
+        X_train = X_train.astype('float32')
+        X_train = torch.from_numpy(X_train)
+        X_val = torch.from_numpy(X_val)
+        mlp_model = MLP(X_train.shape[1], model_reg_name)
+        mlp_train(mlp_model, X_train, y_train, X_val, y_val, l_r = lr, w_d = w_d, n_epochs = epochs, batch_size = batch_size)
+        mlp_model.save()
+        print("training for mlp_model on " + config + " data set done")
+            
+        print("---------------------------------------------------------------------")
+            
+def evaluate_mlp():
+    
+    XY_kdd_train = np.loadtxt(directory_data + kdd + "_train_latent.csv", delimiter=',')
+    XY_kdd_val = np.loadtxt(directory_data + kdd + "_val_latent.csv", delimiter=',')
+    XY_kdd_test = np.loadtxt(directory_data + kdd +"_test_latent.csv", delimiter=',')
+    
+    XY_nsl_train = np.loadtxt(directory_data + nsl + "_train_latent.csv", delimiter=',')
+    XY_nsl_val = np.loadtxt(directory_data + nsl + "_val_latent.csv", delimiter=',')
+    XY_nsl_test = np.loadtxt(directory_data + nsl + "_test_latent.csv", delimiter=',')
+    
+    XY_ids_train = np.loadtxt(directory_data + ids + "_train_latent.csv", delimiter=',')
+    XY_ids_val = np.loadtxt(directory_data + ids + "_val_latent.csv", delimiter=',')
+    XY_ids_test = np.loadtxt(directory_data + ids + "_test_latent.csv", delimiter=',')
+    
+    configs = {kdd: [XY_kdd_train, XY_kdd_val, XY_kdd_test],
+              nsl: [XY_nsl_train, XY_nsl_val, XY_nsl_test],
+              ids: [XY_ids_train, XY_ids_val, XY_ids_test]}
+    
+    
+    for config in configs:
+        print("evaluating "+config+" data set")
+        XY_train, XY_val, XY_test = configs[config]
+        X_train = XY_train[:, :-1]
+        X_val = XY_val[:, :-1]
+        X_test = XY_test[:, :-1]
+        X_train = X_train.astype('float32')
+        X_val = X_val.astype('float32')
+        X_test = X_test.astype('float32')
+        X_train = torch.from_numpy(X_train)
+        X_val = torch.from_numpy(X_val)
+        X_test = torch.from_numpy(X_test)
+       
+        mlp_model = MLP(X_train.shape[1], model_reg_name)
+        mlp_model.load()
+        mlp_model.to(device)
+        
+        save_uncertainty(mlp_model, config, X_train, label="train")
+        save_uncertainty(mlp_model, config, X_val, label="val")
+        save_uncertainty(mlp_model, config, X_test, label="test")
+
+        print("evaluating for mlp model on "+config+" data set done")
 
 
 
