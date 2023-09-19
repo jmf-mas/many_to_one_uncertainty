@@ -38,24 +38,26 @@ def get_scores(model, criterion, X):
     return scores
 
 def get_latent_repr(model, criterion, X):
-    rep = [model.enc(x_in.to(device))[0].numpy() for x_in in X]
+    rep = [model.enc(x_in.to(device)).detach().numpy() for x_in in X]
+    rep = np.array(rep)
     score = [criterion(model(x_in.to(device))[0], x_in.to(device)).item() for x_in in X]
+    score = np.array(score)
     latent_rep = np.concatenate((rep, score.reshape(-1, 1)), axis=1)
     return latent_rep
 
 def save_uncertainty(model, config, X, label="train"):
-    preds = [model(x_in.to(device))[0].numpy() for x_in in X]
+    preds = [model(x_in.to(device)).detach().numpy() for x_in in X]
     np.savetxt(directory_output + config + "_pred_" + label + ".csv", preds)
  
 
 def train_ae(batch_size = 32, lr = 1e-5, w_d = 1e-5, momentum = 0.9, epochs = 5):
     
-    X_kdd_train = np.loadtxt(directory_data+"kdd_train.csv", delimiter=',')
-    XY_kdd_val = np.loadtxt(directory_data+"kdd_val.csv", delimiter=',')
-    X_nsl_train = np.loadtxt(directory_data+"nsl_train.csv", delimiter=',')
-    XY_nsl_val = np.loadtxt(directory_data+"nsl_val.csv", delimiter=',')
-    X_ids_train = np.loadtxt(directory_data+"ids_train.csv", delimiter=',')
-    XY_ids_val = np.loadtxt(directory_data+"ids_val.csv", delimiter=',')
+    X_kdd_train = np.loadtxt(directory_data + kdd + "_train.csv", delimiter=',')
+    XY_kdd_val = np.loadtxt(directory_data + kdd + "_val.csv", delimiter=',')
+    X_nsl_train = np.loadtxt(directory_data + nsl + "_train.csv", delimiter=',')
+    XY_nsl_val = np.loadtxt(directory_data + nsl + "_val.csv", delimiter=',')
+    X_ids_train = np.loadtxt(directory_data + ids + "_train.csv", delimiter=',')
+    XY_ids_val = np.loadtxt(directory_data + ids + "_val.csv", delimiter=',')
     
     configs = {kdd: [X_kdd_train, XY_kdd_val],
               nsl: [X_nsl_train, XY_nsl_val],
@@ -87,15 +89,15 @@ def train_ae(batch_size = 32, lr = 1e-5, w_d = 1e-5, momentum = 0.9, epochs = 5)
     
 def evaluate_ae():
     
-    XY_kdd_test = np.loadtxt(directory_data+"kdd_test.csv", delimiter=',')
-    XY_nsl_test = np.loadtxt(directory_data+"nsl_test.csv", delimiter=',')
-    XY_ids_test = np.loadtxt(directory_data+"ids_test.csv", delimiter=',')
+    XY_kdd_test = np.loadtxt(directory_data + kdd + "_test.csv", delimiter=',')
+    XY_nsl_test = np.loadtxt(directory_data + nsl + "_test.csv", delimiter=',')
+    XY_ids_test = np.loadtxt(directory_data + ids + "_test.csv", delimiter=',')
     
     
     n = [i for i in range(len(XY_ids_test))]
     selection = np.random.choice(n, size = 70000, replace=False)
     np.savetxt(directory_output + "_selection_ids.csv", selection)
-    configs = {kdd: XY_kdd_test,
+    configs = {kdd: XY_kdd_test, 
                nsl: XY_nsl_test,
                ids: XY_ids_test[selection]}
     
@@ -121,16 +123,16 @@ def evaluate_ae():
 
 def build_latent_representation():
     
-    X_kdd_train = np.loadtxt(directory_data+"kdd_train.csv", delimiter=',')
-    XY_kdd_val = np.loadtxt(directory_data+"kdd_val.csv", delimiter=',')
-    X_nsl_train = np.loadtxt(directory_data+"nsl_train.csv", delimiter=',')
-    XY_nsl_val = np.loadtxt(directory_data+"nsl_val.csv", delimiter=',')
-    X_ids_train = np.loadtxt(directory_data+"ids_train.csv", delimiter=',')
-    XY_ids_val = np.loadtxt(directory_data+"ids_val.csv", delimiter=',')
+    X_kdd_train = np.loadtxt(directory_data + kdd + "_train.csv", delimiter=',')
+    XY_kdd_val = np.loadtxt(directory_data + kdd + "_val.csv", delimiter=',')
+    X_nsl_train = np.loadtxt(directory_data + nsl + "_train.csv", delimiter=',')
+    XY_nsl_val = np.loadtxt(directory_data + nsl + "_val.csv", delimiter=',')
+    X_ids_train = np.loadtxt(directory_data + ids + "_train.csv", delimiter=',')
+    XY_ids_val = np.loadtxt(directory_data + ids +"_val.csv", delimiter=',')
     
-    XY_kdd_test = np.loadtxt(directory_data+"kdd_test.csv", delimiter=',')
-    XY_nsl_test = np.loadtxt(directory_data+"nsl_test.csv", delimiter=',')
-    XY_ids_test = np.loadtxt(directory_data+"ids_test.csv", delimiter=',')
+    XY_kdd_test = np.loadtxt(directory_data + kdd + "_test.csv", delimiter=',')
+    XY_nsl_test = np.loadtxt(directory_data + nsl + "_test.csv", delimiter=',')
+    XY_ids_test = np.loadtxt(directory_data + ids + "_test.csv", delimiter=',')
     
     configs_train = {kdd: X_kdd_train,
                nsl: X_nsl_train,
@@ -156,14 +158,13 @@ def build_latent_representation():
                       "test":configs_test}
     
     for configs in configurations:
-    
         for config in configurations[configs]:
             print("evaluating "+config+" data set")
             if configs in ["test", "val"]:
-                XY = configs[config]
+                XY = configurations[configs][config]
                 X, _ = XY[:, :-1], XY[:, -1]
             else:
-                X = configs[config]
+                X = configurations[configs][config]
             
             X = X.astype('float32')
             X = torch.from_numpy(X)
@@ -176,16 +177,19 @@ def build_latent_representation():
                 ae_model.load()
                 ae_model.to(device)
                 scores.append(get_scores(ae_model, criterions[single], X))
-            scores = np.array(scores).reshape(-1, 1)
-            std_scores = np.std(scores, axis=1)
+            scores = np.array(scores)
+            print("shape ", scores.shape)
+            std_scores = np.std(scores, axis=0)
+            print("shape ", std_scores.shape)
             # create latent representation with the randomly selected model
             selected_model_name = "ae_model_"+config+"_"+str(selected_model_id)
             selected_ae_model = AE(X.shape[1], selected_model_name)
             selected_ae_model.load()
             selected_ae_model.to(device)
             
-            latent_rep = get_latent_repr(selected_ae_model, criterions[single], X)
+            latent_rep = get_latent_repr(selected_ae_model, criterions[selected_model_id], X)
             latent_rep = np.concatenate((latent_rep, std_scores.reshape(-1, 1)), axis=1)
+            print("shape ", latent_rep.shape)
             np.savetxt(directory_data + config + "_" + configs + "_latent.csv", latent_rep)
             print("evaluating "+configs+" data set done")
             
