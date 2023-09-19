@@ -17,7 +17,9 @@ class MLP(nn.Module):
             nn.Linear(6, 1)
         )
         self.name = name
-        
+    
+    def forward(self, x):
+        return self.regressor(x)
     
     def save(self):
         parent_name = "checkpoints"

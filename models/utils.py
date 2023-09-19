@@ -79,7 +79,7 @@ def mlp_train(model, X_train, y_train, X_val, y_val, l_r = 1e-2, w_d = 1e-5, n_e
     # training loop
     for epoch in range(n_epochs):
         model.train()
-        with tqdm.tqdm(batch_start, unit="batch", mininterval=0, disable=True) as bar:
+        with tqdm(batch_start, unit="batch", mininterval=0, disable=True) as bar:
             bar.set_description(f"Epoch {epoch}")
             for start in bar:
                 # take a batch
