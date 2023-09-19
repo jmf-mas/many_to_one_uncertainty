@@ -37,6 +37,7 @@ def run_mlp(batch_size, lr, w_d, momentum, epochs, is_train_mlp):
 if __name__ == "__main__":
    parser = argparse.ArgumentParser(description="CUQ-AE-REDM Framework for uncertainty quantification on AEs-based methods for anomaly detection",
                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+   parser.add_argument("-s", "--reg_regime", action="store_true", help="regression_stage", default=False)
    parser.add_argument("-t", "--is_train", action="store_true", help="training mode", default=False)
    parser.add_argument("-r", "--is_train_mlp", action="store_true", help="mlp_training mode", default=False)
    parser.add_argument("-p", "--to_process_data", action="store_true", help="process data", default=False)
@@ -48,6 +49,7 @@ if __name__ == "__main__":
    #parser.add_argument("src", help="Source location")
    args = parser.parse_args()
    configs = vars(args)
+   reg_regime = configs['reg_regime']
    is_train = configs['is_train']
    to_process_data = configs['to_process_data']
    batch_size = configs['batch_size']
@@ -55,4 +57,8 @@ if __name__ == "__main__":
    w_d = configs['weight_decay']       
    momentum = configs['momentum']
    epochs = configs['epochs']
-   run(batch_size, lr, w_d, momentum, epochs, is_train, to_process_data)
+   
+   if not reg_regime:
+       run_ae(batch_size, lr, w_d, momentum, epochs, is_train, to_process_data)
+   else:   
+       run_mlp(batch_size, lr, w_d, momentum, epochs)
