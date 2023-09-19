@@ -178,9 +178,7 @@ def build_latent_representation():
                 ae_model.to(device)
                 scores.append(get_scores(ae_model, criterions[single], X))
             scores = np.array(scores)
-            print("shape ", scores.shape)
             std_scores = np.std(scores, axis=0)
-            print("shape ", std_scores.shape)
             # create latent representation with the randomly selected model
             selected_model_name = "ae_model_"+config+"_"+str(selected_model_id)
             selected_ae_model = AE(X.shape[1], selected_model_name)
@@ -189,8 +187,7 @@ def build_latent_representation():
             
             latent_rep = get_latent_repr(selected_ae_model, criterions[selected_model_id], X)
             latent_rep = np.concatenate((latent_rep, std_scores.reshape(-1, 1)), axis=1)
-            print("shape ", latent_rep.shape)
-            np.savetxt(directory_data + config + "_" + configs + "_latent.csv", latent_rep)
+            np.savetxt(directory_data + config + "_" + configs + "_latent.csv", latent_rep, delimiter=',')
             print("evaluating "+configs+" data set done")
             
 def train_mlp(batch_size = 32, lr = 1e-5, w_d = 1e-5, momentum = 0.9, epochs = 5):
