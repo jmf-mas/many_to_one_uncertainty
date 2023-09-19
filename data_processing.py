@@ -71,6 +71,22 @@ def preprocess_ids_data(chunk):
     
     return XY
 
+def preprocess_kitsune_data(X, y):
+    
+    mean_imputer_X = SimpleImputer(strategy='mean')
+    X_imputed = mean_imputer_X.fit_transform(X)
+    minmax = MinMaxScaler(feature_range=(0, 1))
+    X_scaled = minmax.fit_transform(X_imputed)
+    
+    XY = pd.DataFrame(data = X_scaled,  
+                  columns = X.columns, index=X.index)
+    XY['label'] = y
+    X = XY.values[:, :-1]
+    y = XY.values[:, -1]
+    y = y.astype(int)
+    
+    return X, y
+
 def preprocess_kdd_data(dataframe):
     df_num = dataframe.drop(cat_cols_kdd, axis=1)
     num_cols = df_num.columns
@@ -150,6 +166,18 @@ def process_raw_data():
     np.savetxt("data/kdd.csv", data_kdd, delimiter=',')
     print("processing kdd done")
     
+    # kitsune
+    print("processing kitsune")
+    file_id='1e-5ky0j6SG5D3ODxkHxe73W6tKErsxNZ'
+    dwn_url='https://drive.google.com/uc?id=' + file_id
+    X = pd.read_csv("data/ARP_MitM_dataset.csv", header = None)
+    y = pd.read_csv("data/ARP_MitM_labels.csv", header = None)
+
+    X, y = preprocess_kitsune_data(X, y)
+    data_kitsune = np.concatenate((X, y.reshape(1, -1).T), axis=1)
+    np.savetxt("data/kitsune.csv", data_kitsune.values, delimiter=',')
+    print("processing kitsune done")
+    
 def split_and_save_data():
     print("splitting data: train, val and test")
     XY = np.loadtxt(data_directory+"kdd.csv", delimiter=',')
@@ -158,6 +186,8 @@ def split_and_save_data():
     save_processed_data(XY, "nsl", train_rate = .65, val_rate = 0.2)
     XY = np.loadtxt(data_directory+"ids.csv", delimiter=',')
     save_processed_data(XY, "ids", train_rate = .11, val_rate = 0.3)
+    XY = np.loadtxt(data_directory+"kitsune.csv", delimiter=',')
+    save_processed_data(XY, "kitsune", train_rate = .08, val_rate = 0.3)
     print("splitting data done")
 
     

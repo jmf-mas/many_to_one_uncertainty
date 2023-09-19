@@ -15,7 +15,8 @@ model_reg_name = "mlp_regressor"
 kdd = "kdd"
 nsl = "nsl"
 ids = "ids"
-sample_size = 5
+kitsune = "kitsune"
+sample_size = 15
 criterions = [nn.MSELoss()]*(sample_size + 1) + [nn.BCELoss()]
 metrics = {"std":-2, "ent":-1}
 
@@ -70,10 +71,14 @@ def train_ae(batch_size = 32, lr = 1e-5, w_d = 1e-5, momentum = 0.9, epochs = 5)
     XY_nsl_val = np.loadtxt(directory_data + nsl + "_val.csv", delimiter=',')
     X_ids_train = np.loadtxt(directory_data + ids + "_train.csv", delimiter=',')
     XY_ids_val = np.loadtxt(directory_data + ids + "_val.csv", delimiter=',')
+    X_kitsune_train = np.loadtxt(directory_data + kitsune + "_train.csv", delimiter=',')
+    XY_kitsune_val = np.loadtxt(directory_data + kitsune + "_val.csv", delimiter=',')
     
     configs = {kdd: [X_kdd_train, XY_kdd_val],
               nsl: [X_nsl_train, XY_nsl_val],
-              ids: [X_ids_train, XY_ids_val]}
+              ids: [X_ids_train, XY_ids_val],
+              kitsune: [X_kitsune_train, XY_kitsune_val]
+              }
     
     
     for config in configs:
@@ -103,14 +108,18 @@ def evaluate_ae():
     XY_kdd_test = np.loadtxt(directory_data + kdd + "_test.csv", delimiter=',')
     XY_nsl_test = np.loadtxt(directory_data + nsl + "_test.csv", delimiter=',')
     XY_ids_test = np.loadtxt(directory_data + ids + "_test.csv", delimiter=',')
+    XY_kitsune_test = np.loadtxt(directory_data + kitsune + "_test.csv", delimiter=',')
     
     
     n = [i for i in range(len(XY_ids_test))]
-    selection = np.random.choice(n, size = 70000, replace=False)
-    np.savetxt(directory_output + "_selection_ids.csv", selection)
+    selection_ids = np.random.choice(n, size = 70000, replace=False)
+    np.savetxt(directory_output + "_selection_ids.csv", selection_ids)
+    selection_kitsune = np.random.choice(n, size = 100000, replace=False)
+    np.savetxt(directory_output + "_selection_kitsune.csv", selection_kitsune)
     configs = {kdd: XY_kdd_test, 
                nsl: XY_nsl_test,
-               ids: XY_ids_test[selection]}
+               ids: XY_ids_test[selection_ids],
+               kitsune: XY_kitsune_test[selection_kitsune]}
     
     for config in configs:
         print("evaluating "+config+" data set")
@@ -141,26 +150,34 @@ def build_latent_representation():
     XY_nsl_val = np.loadtxt(directory_data + nsl + "_val.csv", delimiter=',')
     X_ids_train = np.loadtxt(directory_data + ids + "_train.csv", delimiter=',')
     XY_ids_val = np.loadtxt(directory_data + ids +"_val.csv", delimiter=',')
+    X_kitsune_train = np.loadtxt(directory_data + kitsune + "_train.csv", delimiter=',')
+    XY_kitsune_val = np.loadtxt(directory_data + kitsune +"_val.csv", delimiter=',')
     
     XY_kdd_test = np.loadtxt(directory_data + kdd + "_test.csv", delimiter=',')
     XY_nsl_test = np.loadtxt(directory_data + nsl + "_test.csv", delimiter=',')
     XY_ids_test = np.loadtxt(directory_data + ids + "_test.csv", delimiter=',')
+    XY_kitsune_test = np.loadtxt(directory_data + kitsune + "_test.csv", delimiter=',')
     
     configs_train = {kdd: X_kdd_train,
                nsl: X_nsl_train,
-               ids: X_ids_train}
+               ids: X_ids_train,
+               kitsune: X_kitsune_train}
     
     configs_val = {kdd: XY_kdd_val,
                nsl: XY_nsl_val,
-               ids: XY_ids_val}
+               ids: XY_ids_val,
+               kitsune: XY_kitsune_val}
     
     
     n = [i for i in range(len(XY_ids_test))]
-    selection = np.random.choice(n, size = 70000, replace=False)
-    np.savetxt(directory_output + "_selection_ids.csv", selection)
+    selection_ids = np.random.choice(n, size = 70000, replace=False)
+    np.savetxt(directory_output + "_selection_ids.csv", selection_ids)
+    selection_kitsune = np.random.choice(n, size = 100000, replace=False)
+    np.savetxt(directory_output + "_selection_kitsune.csv", selection_kitsune)
     configs_test = {kdd: XY_kdd_test,
                nsl: XY_nsl_test,
-               ids: XY_ids_test[selection]}
+               ids: XY_ids_test[selection_ids],
+               kitsune: XY_kitsune_test[selection_kitsune]}
     
     candidates = [i for i in range(sample_size)]
     selected_model_id = np.random.choice(candidates) 
@@ -219,11 +236,15 @@ def train_mlp(batch_size = 32, lr = 1e-5, w_d = 1e-5, momentum = 0.9, epochs = 5
     
     XY_ids_train = np.loadtxt(directory_data + ids + "_train_latent.csv", delimiter=',')
     XY_ids_val = np.loadtxt(directory_data + ids +"_val_latent.csv", delimiter=',')
+    
+    XY_kitsune_train = np.loadtxt(directory_data + kitsune + "_train_latent.csv", delimiter=',')
+    XY_kitsune_val = np.loadtxt(directory_data + kitsune +"_val_latent.csv", delimiter=',')
 
     
     configs = {kdd: [XY_kdd_train, XY_kdd_val],
               nsl: [XY_nsl_train, XY_nsl_val],
-              ids: [XY_ids_train, XY_ids_val]}
+              ids: [XY_ids_train, XY_ids_val],
+              kitsune: [XY_kitsune_train, XY_kitsune_val]}
     
     
     for metric in metrics:
@@ -257,9 +278,14 @@ def evaluate_mlp():
     XY_ids_val = np.loadtxt(directory_data + ids + "_val_latent.csv", delimiter=',')
     XY_ids_test = np.loadtxt(directory_data + ids + "_test_latent.csv", delimiter=',')
     
+    XY_kitsune_train = np.loadtxt(directory_data + kitsune + "_train_latent.csv", delimiter=',')
+    XY_kitsune_val = np.loadtxt(directory_data + kitsune + "_val_latent.csv", delimiter=',')
+    XY_kitsune_test = np.loadtxt(directory_data + kitsune + "_test_latent.csv", delimiter=',')
+    
     configs = {kdd: [XY_kdd_train, XY_kdd_val, XY_kdd_test],
               nsl: [XY_nsl_train, XY_nsl_val, XY_nsl_test],
-              ids: [XY_ids_train, XY_ids_val, XY_ids_test]}
+              ids: [XY_ids_train, XY_ids_val, XY_ids_test],
+              kitsune: [XY_kitsune_train, XY_kitsune_val, XY_kitsune_test]}
     
     for metric in metrics:
         for config in configs:
