@@ -3,6 +3,8 @@ from sklearn.model_selection import train_test_split
 import pandas as pd
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import MinMaxScaler
+import glob
+from tqdm import tqdm
 pd.set_option('display.max_rows', 1000)
 
 cat_cols_nsl = ['is_host_login','protocol_type','service','flag','land', 'logged_in','is_guest_login', 'level', 'outcome']
@@ -22,6 +24,15 @@ kdd_columns = (['duration','protocol_type','service','flag','src_bytes','dst_byt
 ,'dst_host_same_srv_rate','dst_host_diff_srv_rate','dst_host_same_src_port_rate','dst_host_srv_diff_host_rate','dst_host_serror_rate'
 ,'dst_host_srv_serror_rate','dst_host_rerror_rate','dst_host_srv_rerror_rate','outcome'])
 
+mapping = {'DDoS-ICMP_Flood': 1, 'DDoS-UDP_Flood': 1, 'DDoS-TCP_Flood': 1, 'DDoS-PSHACK_Flood': 1,
+    'DDoS-SYN_Flood': 1,'DDoS-RSTFINFlood': 1,'DDoS-SynonymousIP_Flood': 1, 'DoS-UDP_Flood': 1, 'DoS-TCP_Flood': 1,
+    'DoS-SYN_Flood': 1, 'BenignTraffic': 0, 'Mirai-greeth_flood': 1, 'Mirai-udpplain': 1,
+    'Mirai-greip_flood': 1, 'DDoS-ICMP_Fragmentation': 1, 'MITM-ArpSpoofing': 1, 'DDoS-UDP_Fragmentation': 1,
+    'DDoS-ACK_Fragmentation': 1, 'DNS_Spoofing': 1, 'Recon-HostDiscovery': 1, 'Recon-OSScan': 1,
+    'Recon-PortScan': 1, 'DoS-HTTP_Flood': 1, 'VulnerabilityScan': 1, 'DDoS-HTTP_Flood': 1,
+    'DDoS-SlowLoris': 1, 'DictionaryBruteForce': 1, 'BrowserHijacking': 1, 'CommandInjection': 1,
+    'SqlInjection': 1, 'XSS': 1, 'Backdoor_Malware': 1, 'Recon-PingSweep': 1, 'Uploading_Attack': 1}
+
 
 
 data_directory ="data/"
@@ -29,7 +40,8 @@ file_extension = ".csv"
 kdd = "kdd_data.csv"
 nsl = "nsl_data.csv"
 ids = "ids_data.csv"
-
+kitsune = "kitsune_data.csv"
+ciciot = "ciciot_data.csv"
 
 def scaling(df_num, cols):
     std_scaler = MinMaxScaler(feature_range=(0, 1))
@@ -86,6 +98,20 @@ def preprocess_kitsune_data(X, y):
     y = y.astype(int)
     
     return X, y
+
+def preprocess_ciciot_data(data):
+    X = data.drop(columns=['label'])
+    y = data['label'].values
+    mean_imputer_X = SimpleImputer(strategy='mean')
+    X_imputed = mean_imputer_X.fit_transform(X)
+    minmax = MinMaxScaler(feature_range=(0, 1))
+    X_scaled = minmax.fit_transform(X_imputed)
+    
+    XY = pd.DataFrame(data = X_scaled,  
+                  columns = X.columns, index=X.index)
+    XY['label'] = y
+    
+    return XY
 
 def preprocess_kdd_data(dataframe):
     df_num = dataframe.drop(cat_cols_kdd, axis=1)
@@ -178,6 +204,23 @@ def process_raw_data():
     np.savetxt("data/kitsune.csv", data_kitsune.values, delimiter=',')
     print("processing kitsune done")
     
+    # ciciot
+    print("processing ciciot")
+    file_id='1e-5ky0j6SG5D3ODxkHxe73W6tKErsxNZ'
+    dwn_url='https://drive.google.com/uc?id=' + file_id
+    file_paths = glob.glob( 'data/part*.csv')
+    df = pd.DataFrame()
+    for file_path in tqdm(file_paths, desc='Processing files', unit='file'):
+        dff = pd.read_csv(file_path)
+        df = pd.concat([df, dff], ignore_index=True)
+    
+    df['label'] = df['label'].map(mapping)
+
+    X, y = preprocess_ciciot_data(df)
+    data_kitsune = np.concatenate((X, y.reshape(1, -1).T), axis=1)
+    np.savetxt("data/ciciot.csv", data_kitsune.values, delimiter=',')
+    print("processing ciciot done")
+    
 def split_and_save_data():
     print("splitting data: train, val and test")
     XY = np.loadtxt(data_directory+"kdd.csv", delimiter=',')
@@ -188,6 +231,8 @@ def split_and_save_data():
     save_processed_data(XY, "ids", train_rate = .11, val_rate = 0.3)
     XY = np.loadtxt(data_directory+"kitsune.csv", delimiter=',')
     save_processed_data(XY, "kitsune", train_rate = .08, val_rate = 0.3)
+    XY = np.loadtxt(data_directory+"ciciot.csv", delimiter=',')
+    save_processed_data(XY, "ciciot", train_rate = .7, val_rate = 0.3)
     print("splitting data done")
 
     
