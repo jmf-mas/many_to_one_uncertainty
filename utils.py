@@ -20,6 +20,7 @@ ciciot = "ciciot"
 sample_size = 15
 criterions = [nn.MSELoss()]*(sample_size + 1) + [nn.BCELoss()]
 metrics = {"std":-2, "ent":-1}
+candidates = [i for i in range(sample_size)]
 
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -195,146 +196,148 @@ def build_latent_representation():
                kitsune: XY_kitsune_test[selection_kitsune],
                ciciot: XY_ciciot_test[selection_ciciot]}
     
-    candidates = [i for i in range(sample_size)]
-    selected_model_id = np.random.choice(candidates) 
+    
     
     configurations = {"train": configs_train,
                       "val": configs_val,
                       "test":configs_test}
     
-    for configs in configurations:
-        for config in configurations[configs]:
-            print("evaluating "+config+" data set")
-            if configs in ["test", "val"]:
-                XY = configurations[configs][config]
-                X, _ = XY[:, :-1], XY[:, -1]
-            else:
-                X = configurations[configs][config]
-            
-            X = X.astype('float32')
-            X = torch.from_numpy(X)
+    for selected_model_id in candidates:
+        for configs in configurations:
+            for config in configurations[configs]:
+                print("evaluating "+config+" data set on candidate "+str(selected_model_id))
+                if configs in ["test", "val"]:
+                    XY = configurations[configs][config]
+                    X, _ = XY[:, :-1], XY[:, -1]
+                else:
+                    X = configurations[configs][config]
                 
-            scores = []
-            entropies = []
-            for single in range(sample_size):
-                print("evaluation for ae_model_"+str(single))
-                model_name = "ae_model_"+config+"_"+str(single)
-                ae_model = AE(X.shape[1], model_name)
-                eta = np.loadtxt(directory_output + config + "_threshold_" + model_name + ".csv")
-                ae_model.load()
-                ae_model.to(device)
-                scores.append(get_scores(ae_model, criterions[single], X))
-                entropies.append(get_entropies(ae_model, criterions[single], eta, X))
-            scores = np.array(scores)
-            entropies = np.array(entropies)
-            std_scores = np.std(scores, axis=0)
-            mean_entropies = np.std(entropies, axis=0)
-            # create latent representation with the randomly selected model
-            selected_model_name = "ae_model_"+config+"_"+str(selected_model_id)
-            selected_ae_model = AE(X.shape[1], selected_model_name)
-            selected_ae_model.load()
-            selected_ae_model.to(device)
-            
-            latent_rep = get_latent_repr(selected_ae_model, criterions[selected_model_id], X)
-            latent_rep = np.concatenate((latent_rep, std_scores.reshape(-1, 1)), axis=1)
-            latent_rep = np.concatenate((latent_rep, mean_entropies.reshape(-1, 1)), axis=1)
-            np.savetxt(directory_data + config + "_" + configs + "_latent.csv", latent_rep, delimiter=',')
-            print("evaluating "+configs+" data set done")
+                X = X.astype('float32')
+                X = torch.from_numpy(X)
+                    
+                scores = []
+                entropies = []
+                for single in range(sample_size):
+                    print("evaluation for ae_model_"+str(single) + " on candidate "+str(selected_model_id))
+                    model_name = "ae_model_"+config+"_"+str(single)
+                    ae_model = AE(X.shape[1], model_name)
+                    eta = np.loadtxt(directory_output + config + "_threshold_" + model_name + ".csv")
+                    ae_model.load()
+                    ae_model.to(device)
+                    scores.append(get_scores(ae_model, criterions[single], X))
+                    entropies.append(get_entropies(ae_model, criterions[single], eta, X))
+                scores = np.array(scores)
+                entropies = np.array(entropies)
+                std_scores = np.std(scores, axis=0)
+                mean_entropies = np.std(entropies, axis=0)
+                # create latent representation with the randomly selected model
+                selected_model_name = "ae_model_"+config+"_"+str(selected_model_id)
+                selected_ae_model = AE(X.shape[1], selected_model_name)
+                selected_ae_model.load()
+                selected_ae_model.to(device)
+                
+                latent_rep = get_latent_repr(selected_ae_model, criterions[selected_model_id], X)
+                latent_rep = np.concatenate((latent_rep, std_scores.reshape(-1, 1)), axis=1)
+                latent_rep = np.concatenate((latent_rep, mean_entropies.reshape(-1, 1)), axis=1)
+                np.savetxt(directory_data + config + "_" + configs + "_latent_" + str(selected_model_id) +".csv", latent_rep, delimiter=',')
+            print("evaluating "+configs+" data set done on candidate "+str(selected_model_id))
             
 def train_mlp(batch_size = 32, lr = 1e-5, w_d = 1e-5, momentum = 0.9, epochs = 5):
     
-    XY_kdd_train = np.loadtxt(directory_data + kdd + "_train_latent.csv", delimiter=',')
-    XY_kdd_val = np.loadtxt(directory_data + kdd + "_val_latent.csv", delimiter=',')
-
+    for selected_model_id in candidates:
+        XY_kdd_train = np.loadtxt(directory_data + kdd + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
+        XY_kdd_val = np.loadtxt(directory_data + kdd + "_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
     
-    XY_nsl_train = np.loadtxt(directory_data + nsl + "_train_latent.csv", delimiter=',')
-    XY_nsl_val = np.loadtxt(directory_data + nsl + "_val_latent.csv", delimiter=',')
+        
+        XY_nsl_train = np.loadtxt(directory_data + nsl + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
+        XY_nsl_val = np.loadtxt(directory_data + nsl + "_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
+        
+        XY_ids_train = np.loadtxt(directory_data + ids + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
+        XY_ids_val = np.loadtxt(directory_data + ids +"_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
+        
+        XY_kitsune_train = np.loadtxt(directory_data + kitsune + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
+        XY_kitsune_val = np.loadtxt(directory_data + kitsune +"_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
+        
+        XY_ciciot_train = np.loadtxt(directory_data + ciciot + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
+        XY_ciciot_val = np.loadtxt(directory_data + ciciot +"_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
     
-    XY_ids_train = np.loadtxt(directory_data + ids + "_train_latent.csv", delimiter=',')
-    XY_ids_val = np.loadtxt(directory_data + ids +"_val_latent.csv", delimiter=',')
-    
-    XY_kitsune_train = np.loadtxt(directory_data + kitsune + "_train_latent.csv", delimiter=',')
-    XY_kitsune_val = np.loadtxt(directory_data + kitsune +"_val_latent.csv", delimiter=',')
-    
-    XY_ciciot_train = np.loadtxt(directory_data + ciciot + "_train_latent.csv", delimiter=',')
-    XY_ciciot_val = np.loadtxt(directory_data + ciciot +"_val_latent.csv", delimiter=',')
-
-    
-    configs = {kdd: [XY_kdd_train, XY_kdd_val],
-              nsl: [XY_nsl_train, XY_nsl_val],
-              ids: [XY_ids_train, XY_ids_val],
-              kitsune: [XY_kitsune_train, XY_kitsune_val],
-              ciciot: [XY_ciciot_train, XY_ciciot_val]}
-    
-    
-    for metric in metrics:
-        for config in configs:
-            print("training on "+config+" data set")
-            XY_train, XY_val = configs[config]
-            X_train, y_train = XY_train[:, :-2], XY_train[:, metrics[metric]]
-            X_val, y_val = XY_val[:, :-2], XY_val[:, metrics[metric]]
-            
-            X_val = X_val.astype('float32')
-            X_train = X_train.astype('float32')
-            X_train = torch.from_numpy(X_train)
-            X_val = torch.from_numpy(X_val)
-            mlp_model = MLP(X_train.shape[1], model_reg_name + metric)
-            mlp_train(mlp_model, X_train, y_train, X_val, y_val, l_r = lr, w_d = w_d, n_epochs = epochs, batch_size = batch_size)
-            mlp_model.save()
-            print("training for mlp_model on " + config + " data set done for metric "+metric)
-        print("---------------------------------------------------------------------")
+        
+        configs = {kdd: [XY_kdd_train, XY_kdd_val],
+                  nsl: [XY_nsl_train, XY_nsl_val],
+                  ids: [XY_ids_train, XY_ids_val],
+                  kitsune: [XY_kitsune_train, XY_kitsune_val],
+                  ciciot: [XY_ciciot_train, XY_ciciot_val]}
+        
+        
+        for metric in metrics:
+            for config in configs:
+                print("training on "+config+" data set on candidate "+str(selected_model_id))
+                XY_train, XY_val = configs[config]
+                X_train, y_train = XY_train[:, :-2], XY_train[:, metrics[metric]]
+                X_val, y_val = XY_val[:, :-2], XY_val[:, metrics[metric]]
+                
+                X_val = X_val.astype('float32')
+                X_train = X_train.astype('float32')
+                X_train = torch.from_numpy(X_train)
+                X_val = torch.from_numpy(X_val)
+                mlp_model = MLP(X_train.shape[1], model_reg_name + metric + "_" + str(selected_model_id))
+                mlp_train(mlp_model, X_train, y_train, X_val, y_val, l_r = lr, w_d = w_d, n_epochs = epochs, batch_size = batch_size)
+                mlp_model.save()
+                print("training for mlp_model on " + config + " data set done for metric "+metric+ " on candidate "+str(selected_model_id))
+            print("---------------------------------------------------------------------")
             
 def evaluate_mlp():
     
-    XY_kdd_train = np.loadtxt(directory_data + kdd + "_train_latent.csv", delimiter=',')
-    XY_kdd_val = np.loadtxt(directory_data + kdd + "_val_latent.csv", delimiter=',')
-    XY_kdd_test = np.loadtxt(directory_data + kdd +"_test_latent.csv", delimiter=',')
-    
-    XY_nsl_train = np.loadtxt(directory_data + nsl + "_train_latent.csv", delimiter=',')
-    XY_nsl_val = np.loadtxt(directory_data + nsl + "_val_latent.csv", delimiter=',')
-    XY_nsl_test = np.loadtxt(directory_data + nsl + "_test_latent.csv", delimiter=',')
-    
-    XY_ids_train = np.loadtxt(directory_data + ids + "_train_latent.csv", delimiter=',')
-    XY_ids_val = np.loadtxt(directory_data + ids + "_val_latent.csv", delimiter=',')
-    XY_ids_test = np.loadtxt(directory_data + ids + "_test_latent.csv", delimiter=',')
-    
-    XY_kitsune_train = np.loadtxt(directory_data + kitsune + "_train_latent.csv", delimiter=',')
-    XY_kitsune_val = np.loadtxt(directory_data + kitsune + "_val_latent.csv", delimiter=',')
-    XY_kitsune_test = np.loadtxt(directory_data + kitsune + "_test_latent.csv", delimiter=',')
-    
-    XY_ciciot_train = np.loadtxt(directory_data + ciciot + "_train_latent.csv", delimiter=',')
-    XY_ciciot_val = np.loadtxt(directory_data + ciciot + "_val_latent.csv", delimiter=',')
-    XY_ciciot_test = np.loadtxt(directory_data + ciciot + "_test_latent.csv", delimiter=',')
-    
-    configs = {kdd: [XY_kdd_train, XY_kdd_val, XY_kdd_test],
-              nsl: [XY_nsl_train, XY_nsl_val, XY_nsl_test],
-              ids: [XY_ids_train, XY_ids_val, XY_ids_test],
-              kitsune: [XY_kitsune_train, XY_kitsune_val, XY_kitsune_test],
-              ciciot: [XY_ciciot_train, XY_ciciot_val, XY_ciciot_test]}
-    
-    for metric in metrics:
-        for config in configs:
-            print("evaluating "+config+" data set")
-            XY_train, XY_val, XY_test = configs[config]
-            X_train = XY_train[:, :-2]
-            X_val = XY_val[:, :-2]
-            X_test = XY_test[:, :-2]
-            X_train = X_train.astype('float32')
-            X_val = X_val.astype('float32')
-            X_test = X_test.astype('float32')
-            X_train = torch.from_numpy(X_train)
-            X_val = torch.from_numpy(X_val)
-            X_test = torch.from_numpy(X_test)
-           
-            mlp_model = MLP(X_train.shape[1], model_reg_name + metric)
-            mlp_model.load()
-            mlp_model.to(device)
-            
-            save_uncertainty(mlp_model, config, X_train, label="train_" + metric)
-            save_uncertainty(mlp_model, config, X_val, label="val_" + metric)
-            save_uncertainty(mlp_model, config, X_test, label="test_" + metric)
-    
-            print("evaluating for mlp model on "+config+" data set done for metric " + metric)
+    for selected_model_id in candidates:
+        XY_kdd_train = np.loadtxt(directory_data + kdd + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
+        XY_kdd_val = np.loadtxt(directory_data + kdd + "_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
+        XY_kdd_test = np.loadtxt(directory_data + kdd +"_test_latent_" + str(selected_model_id) +".csv", delimiter=',')
+        
+        XY_nsl_train = np.loadtxt(directory_data + nsl + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
+        XY_nsl_val = np.loadtxt(directory_data + nsl + "_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
+        XY_nsl_test = np.loadtxt(directory_data + nsl + "_test_latent_" + str(selected_model_id) +".csv", delimiter=',')
+        
+        XY_ids_train = np.loadtxt(directory_data + ids + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
+        XY_ids_val = np.loadtxt(directory_data + ids + "_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
+        XY_ids_test = np.loadtxt(directory_data + ids + "_test_latent_" + str(selected_model_id) +".csv", delimiter=',')
+        
+        XY_kitsune_train = np.loadtxt(directory_data + kitsune + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
+        XY_kitsune_val = np.loadtxt(directory_data + kitsune + "_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
+        XY_kitsune_test = np.loadtxt(directory_data + kitsune + "_test_latent_" + str(selected_model_id) +".csv", delimiter=',')
+        
+        XY_ciciot_train = np.loadtxt(directory_data + ciciot + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
+        XY_ciciot_val = np.loadtxt(directory_data + ciciot + "_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
+        XY_ciciot_test = np.loadtxt(directory_data + ciciot + "_test_latent_" + str(selected_model_id) +".csv", delimiter=',')
+        
+        configs = {kdd: [XY_kdd_train, XY_kdd_val, XY_kdd_test],
+                  nsl: [XY_nsl_train, XY_nsl_val, XY_nsl_test],
+                  ids: [XY_ids_train, XY_ids_val, XY_ids_test],
+                  kitsune: [XY_kitsune_train, XY_kitsune_val, XY_kitsune_test],
+                  ciciot: [XY_ciciot_train, XY_ciciot_val, XY_ciciot_test]}
+        
+        for metric in metrics:
+            for config in configs:
+                print("evaluating "+config+" data set on candidate "+str(selected_model_id))
+                XY_train, XY_val, XY_test = configs[config]
+                X_train = XY_train[:, :-2]
+                X_val = XY_val[:, :-2]
+                X_test = XY_test[:, :-2]
+                X_train = X_train.astype('float32')
+                X_val = X_val.astype('float32')
+                X_test = X_test.astype('float32')
+                X_train = torch.from_numpy(X_train)
+                X_val = torch.from_numpy(X_val)
+                X_test = torch.from_numpy(X_test)
+               
+                mlp_model = MLP(X_train.shape[1], model_reg_name + metric + "_" + str(selected_model_id))
+                mlp_model.load()
+                mlp_model.to(device)
+                
+                save_uncertainty(mlp_model, config, X_train, label="train_" + metric + "_" + str(selected_model_id))
+                save_uncertainty(mlp_model, config, X_val, label="val_" + metric + "_" + str(selected_model_id))
+                save_uncertainty(mlp_model, config, X_test, label="test_" + metric + "_" + str(selected_model_id))
+        
+                print("evaluating for mlp model on "+config+" data set done for metric " + metric+ " on candidate "+str(selected_model_id))
 
 
 
