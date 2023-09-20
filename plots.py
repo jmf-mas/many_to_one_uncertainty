@@ -1,181 +1,157 @@
-import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.decomposition import PCA
-import seaborn as sns
+from sklearn.metrics import mean_squared_error as mse
+import matplotlib.pyplot as plt
+from scipy.stats import pearsonr as pcc
+from scipy.stats import spearmanr as scc
 import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
-from scipy.stats import entropy
-from metrics import false_alarms
+import seaborn as sns
 
-def heatmap(metrics, filename):
+directory_data = "data/"
+directory_outputs = "outputs/"
+kdd = "kdd"
+nsl = "nsl"
+ids = "ids"
+kitsune = "kitsune"
+ciciot = "ciciot"
+metrics = {"ent":-1, "std":-2}
 
-
-    uq_methods = ["EDL", "MCD", "VAEs", "CP",
-                  "EDL+", "MCD+", "VAEs+", "CP+"]
-
- 
-    # Create a dataset
-    metrics = np.round(metrics, 2)
-    df = pd.DataFrame(metrics, columns=uq_methods, index = uq_methods)
-
-    # plot using a color palette
-    sns.heatmap(df, cmap="YlGnBu", annot=True)
-    plt.yticks(rotation = 0)
-    plt.xticks(rotation = 90)
-    plt.savefig(filename+".png", dpi=300)
-    plt.show()
+def get_plots(i, metric, filename):
     
-    metrics = np.round(metrics, 2)
-
-def rejection_plot(S, S_p, y_edl_pred_0, y_i, y_test, filename, dec = 4):
+    y_pred_train_ids = np.loadtxt(directory_outputs + ids + "_pred_train_"+metric+"_"+str(i)+".csv", delimiter=",")
+    y_pred_val_ids = np.loadtxt(directory_outputs + ids + "_pred_val_"+metric+"_"+str(i)+".csv", delimiter=",")
+    y_pred_test_ids = np.loadtxt(directory_outputs + ids + "_pred_test_"+metric+"_"+str(i)+".csv", delimiter=",")
     
-    qs = np.array(range(5, 85, 5))
-    qs = qs.reshape((4, 4))
-    m,n = qs.shape
-    fig, axes = plt.subplots(4, 4, figsize=(8, 5), sharey=True)
-    fig.subplots_adjust(hspace=0.50, wspace=0.125)
-    sns.set_style(rc = {'axes.facecolor': '#FFFFFF'})
-    for i in range(m):
-        for j in range(n):
-            rejection = false_alarms(S, S_p, y_edl_pred_0, y_i, y_test, q=qs[i, j], dec = dec)
-            sns.barplot(ax=axes[i, j], data=rejection, x="metrics", y="count", hue="indicator")
-            axes[i, j].set_title("$\gamma=$"+str(qs[i, j]),  fontsize=10)
-            axes[i, j].legend(loc='best', fontsize=7)
-            axes[i, j].set(xlabel=None)
-            axes[i, j].set_ylabel("Count", fontsize=10)
-            if i==0 and j==0:
-                handles, labels = axes[i, j].get_legend_handles_labels()
-            axes[i, j].get_legend().remove()
-            
-            if j!=0:
-                axes[i, j].set(ylabel=None)
-            if i<3:
-                axes[i, j].tick_params(bottom=False)
-                axes[i, j].set(xticklabels=[])
-            else:
-                axes[i, j].set_xticklabels(axes[i, j].get_xticklabels(), rotation=45, fontsize=10)
+    y_pred_train_nsl = np.loadtxt(directory_outputs + nsl + "_pred_train_"+metric+"_"+str(i)+".csv", delimiter=",")
+    y_pred_val_nsl = np.loadtxt(directory_outputs + nsl + "_pred_val_"+metric+"_"+str(i)+".csv", delimiter=",")
+    y_pred_test_nsl = np.loadtxt(directory_outputs + nsl +"_pred_test_"+metric+"_"+str(i)+".csv", delimiter=",")
     
-    fig.legend(handles, labels, loc="upper left", bbox_to_anchor=(.65,.98), fontsize=12)
-    plt.savefig("rejection_"+filename+".png", dpi=300)
-    plt.show()
+    y_pred_train_kdd = np.loadtxt(directory_outputs + kdd + "_pred_train_"+metric+"_"+str(i)+".csv", delimiter=",")
+    y_pred_val_kdd = np.loadtxt(directory_outputs + kdd +"_pred_val_"+metric+"_"+str(i)+".csv", delimiter=",")
+    y_pred_test_kdd = np.loadtxt(directory_outputs + kdd +"_pred_test_"+metric+"_"+str(i)+".csv", delimiter=",")
     
-def redm(params, filename, scale_n = 0.002, scale_a = 0.0002, s = 500000):
-    fontsize = 4.5
-    grid = plt.GridSpec(5, 2, wspace=0.4, hspace=0.6)
+    y_pred_train_kitsune = np.loadtxt(directory_outputs + kitsune + "_pred_train_"+metric+"_"+str(i)+".csv", delimiter=",")
+    y_pred_val_kitsune = np.loadtxt(directory_outputs + kitsune +"_pred_val_"+metric+"_"+str(i)+".csv", delimiter=",")
+    y_pred_test_kitsune = np.loadtxt(directory_outputs + kitsune +"_pred_test_"+metric+"_"+str(i)+".csv", delimiter=",")
     
-    E_normal, S_normal, S_n, p_normal, _, _ = params.normal
-    E_abnormal, S_abnormal, S_a, p_abnormal, _, _ = params.abnormal
-    
-    x = np.concatenate((params.E_minus, params.E_star, params.E_plus))
-    x.sort()
-    y_n = params.n_model(x)*params.dx_minus
-    y_u = params.u_model(x)*params.dx_star
-    y_a = params.a_model(x)*params.dx_plus
-    y_min, y_max = np.min(y_n), np.max(y_n)
-    scaler = MinMaxScaler(feature_range=(y_min, y_max))
-    y_u = scaler.fit_transform(y_u.reshape(-1, 1))
-    y_a = scaler.fit_transform(y_a.reshape(-1, 1))
-    plt.subplot(grid[0, 0:]).plot(x, y_n, color='blue', label ='normality pdf')
-    plt.subplot(grid[0, 0:]).plot(x, y_a, color='red', label = 'abnormality pdf')
-    plt.subplot(grid[0, 0:]).plot(x, y_u, color='gray', label = 'uncertainty pdf')
-    plt.subplot(grid[0, 0:]).axvline(x = params.eta, color = 'red', lw=0.5)
-    plt.subplot(grid[0, 0:]).legend(loc='best', fontsize=fontsize)
-    plt.subplot(grid[0, 0:]).set_ylabel("probability", fontsize=fontsize)
-    y_n_min = min(np.min(p_normal - scale_n * S_normal), np.min(p_normal - scale_n * S_n))
-    y_n_max = max(np.max(p_normal + scale_n * S_normal), np.max(p_normal + scale_n * S_n))
-    plt.subplot(grid[1, 0]).plot(E_normal, p_normal, '-b', label='regularity')
-    plt.subplot(grid[1, 0]).set_ylim(y_n_min, y_n_max)
-    plt.subplot(grid[1, 0]).fill_between(E_normal, p_normal - scale_n * S_normal, p_normal + scale_n * S_normal, alpha=0.6, color='#86cfac', zorder=5)
-    plt.subplot(grid[1, 0]).axvline(x = params.eta, color = 'red', lw=0.5)
-    plt.subplot(grid[1, 0]).set_ylabel("normality probability", fontsize=fontsize)
-    plt.subplot(grid[1, 1]).plot(E_normal, p_normal, '-b', label='regularity')
-    plt.subplot(grid[1, 1]).set_ylim(y_n_min, y_n_max)
-    plt.subplot(grid[1, 1]).fill_between(E_normal, p_normal - scale_n * S_n, p_normal + scale_n * S_n, alpha=0.6, color='#86cfac', zorder=5)
-    plt.subplot(grid[1, 1]).axvline(x = params.eta, color = 'red', lw=0.5)
-    plt.subplot(grid[2, 0]).plot(E_abnormal, p_abnormal, '-k', label='regularity')
-    y_a_min = min(np.min(p_abnormal - scale_a * S_abnormal), np.min(p_abnormal - scale_a * S_a))
-    y_a_max = max(np.max(p_abnormal + scale_a * S_abnormal), np.max(p_abnormal + scale_a * S_a))
-    plt.subplot(grid[2, 0]).set_ylim(y_a_min, y_a_max)
-    plt.subplot(grid[2, 0]).fill_between(E_abnormal, p_abnormal - scale_a * S_abnormal, p_abnormal + scale_a * S_abnormal, alpha=0.6, color='#ffcccc', zorder=5)
-    plt.subplot(grid[2, 0]).axvline(x = params.eta, color = 'red', lw=0.5)
-    plt.subplot(grid[2, 0]).set_ylabel("abnormality probability", fontsize=fontsize)
-    plt.subplot(grid[2, 1]).plot(E_abnormal, p_abnormal, '-k', label='regularity')
-    plt.subplot(grid[2, 1]).set_ylim(y_a_min, y_a_max)
-    plt.subplot(grid[2, 1]).axvline(x = params.eta, color = 'red', lw=0.5)
-    plt.subplot(grid[2, 1]).fill_between(E_abnormal, p_abnormal - scale_a * S_a, p_abnormal + scale_a * S_a, alpha=0.6, color='#ffcccc', zorder=5)
-    x = list(E_normal)[:]
-    x.extend(list(E_abnormal))
-    cdf = params.cdf(x)
-    plt.subplot(grid[3, 0]).plot(x, cdf, '-k', label='regularity')
-    S = list(S_normal)[:]
-    S.extend(list(S_abnormal))
-    S_p = list(S_n)[:]
-    S_p.extend(list(S_a))
-    S, S_p = np.array(S), np.array(S_p)
-    scale_a *=s
-    y_a_min = min(np.min(cdf - scale_a * S), np.min(cdf - scale_a * S_p))
-    y_a_max = max(np.max(cdf + scale_a * S), np.max(cdf + scale_a * S_p))
-    plt.subplot(grid[3, 0]).set_ylim(y_a_min, y_a_max)
-    plt.subplot(grid[3, 0]).fill_between(x, cdf - scale_a * S, cdf + scale_a * S, alpha=0.6, color='#ffcccc', zorder=5)
-    plt.subplot(grid[3, 0]).axvline(x = params.eta, color = 'red', lw=0.5)
-    plt.subplot(grid[3, 0]).set_ylabel("abnormality probability", fontsize=fontsize)
-    plt.subplot(grid[3, 0]).set_xlabel("reconstruction error", fontsize=fontsize)
-    plt.subplot(grid[3, 1]).plot(x, cdf, '-k', label='regularity')
-    plt.subplot(grid[3, 1]).set_ylim(y_a_min, y_a_max)
-    plt.subplot(grid[3, 1]).axvline(x = params.eta, color = 'red', lw=0.5)
-    plt.subplot(grid[3, 1]).fill_between(x, cdf - scale_a * S_p, cdf + scale_a * S_p, alpha=0.6, color='#ffcccc', zorder=5)
-    plt.subplot(grid[3, 1]).set_xlabel("reconstruction error", fontsize=fontsize)
+    y_pred_train_ciciot = np.loadtxt(directory_outputs + ciciot + "_pred_train_"+metric+"_"+str(i)+".csv", delimiter=",")
+    y_pred_val_ciciot = np.loadtxt(directory_outputs + ciciot +"_pred_val_"+metric+"_"+str(i)+".csv", delimiter=",")
+    y_pred_test_ciciot = np.loadtxt(directory_outputs + ciciot +"_pred_test_"+metric+"_"+str(i)+".csv", delimiter=",")
     
     
-    p_0 = np.array(cdf)
-    p_1 = 1-p_0
-    p = np.concatenate((p_0.reshape(-1, 1), p_1.reshape(-1, 1)), axis=1)
-    H = entropy(p, base=2, axis=1)
-    plt.subplot(grid[4, 0]).plot(x, cdf, '-k', label='regularity')
-    plt.subplot(grid[4, 0]).set_ylim(y_a_min, y_a_max)
-    plt.subplot(grid[4, 0]).fill_between(x, cdf - scale_a * S, cdf + scale_a * S, alpha=0.6, color='#ffcccc', zorder=5)
-    plt.subplot(grid[4, 0]).axvline(x = params.eta, color = 'red', lw=0.5)
-    plt.subplot(grid[4, 0]).set_ylabel("abnormality probability", fontsize=fontsize)
-    plt.subplot(grid[4, 0]).set_xlabel("reconstruction error", fontsize=fontsize)
-    plt.subplot(grid[4, 1]).plot(x, cdf, '-k', label='regularity')
-    plt.subplot(grid[4, 1]).set_ylim(y_a_min, y_a_max)
-    plt.subplot(grid[4, 1]).axvline(x = params.eta, color = 'red', lw=0.5)
-    plt.subplot(grid[4, 1]).fill_between(x, cdf - scale_a * S*H, cdf + scale_a * S*H, alpha=0.6, color='#ffcccc', zorder=5)
-    plt.subplot(grid[4, 1]).set_xlabel("reconstruction error", fontsize=fontsize)
+    XY_kdd_train = np.loadtxt(directory_data + kdd + "_train_latent_" + str(i) +".csv", delimiter=',')
+    y_train_kdd = XY_kdd_train[:, metrics[metric]]
+    X_train_kdd = XY_kdd_train[:, :-2]
+    XY_kdd_val = np.loadtxt(directory_data + kdd + "_val_latent_" + str(i) +".csv", delimiter=',')
+    y_val_kdd = XY_kdd_val[:, metrics[metric]]
+    X_val_kdd = XY_kdd_val[:, :-2]
+    XY_kdd_test = np.loadtxt(directory_data + kdd +"_test_latent_" + str(i) +".csv", delimiter=',')
+    y_test_kdd = XY_kdd_test[:, metrics[metric]]
+    X_test_kdd = XY_kdd_test[:, :-2]
+        
+    XY_nsl_train = np.loadtxt(directory_data + nsl + "_train_latent_" + str(i) +".csv", delimiter=',')
+    y_train_nsl = XY_nsl_train[:, metrics[metric]]
+    X_train_nsl = XY_nsl_train[:, :-2]
+    XY_nsl_val = np.loadtxt(directory_data + nsl + "_val_latent_" + str(i) +".csv", delimiter=',')
+    y_val_nsl = XY_nsl_val[:, metrics[metric]]
+    X_val_nsl = XY_nsl_val[:, :-2]
+    XY_nsl_test = np.loadtxt(directory_data + nsl + "_test_latent_" + str(i) +".csv", delimiter=',')
+    y_test_nsl = XY_nsl_test[:, metrics[metric]]
+    X_test_nsl = XY_nsl_test[:, :-2]
+        
+    XY_ids_train = np.loadtxt(directory_data + ids + "_train_latent_" + str(i) +".csv", delimiter=',')
+    y_train_ids = XY_ids_train[:, metrics[metric]]
+    X_train_ids = XY_ids_train[:, :-2]
+    XY_ids_val = np.loadtxt(directory_data + ids + "_val_latent_" + str(i) +".csv", delimiter=',')
+    y_val_ids = XY_ids_val[:, metrics[metric]]
+    X_val_ids = XY_ids_val[:, :-2]
+    XY_ids_test = np.loadtxt(directory_data + ids + "_test_latent_" + str(i) +".csv", delimiter=',')
+    y_test_ids = XY_ids_test[:, metrics[metric]]
+    X_test_ids = XY_ids_test[:, :-2]
     
+    XY_kitsune_train = np.loadtxt(directory_data + kitsune + "_train_latent_" + str(i) +".csv", delimiter=',')
+    y_train_kitsune = XY_kitsune_train[:, metrics[metric]]
+    X_train_kitsune = XY_kitsune_train[:, :-2]
+    XY_kitsune_val = np.loadtxt(directory_data + kitsune + "_val_latent_" + str(i) +".csv", delimiter=',')
+    y_val_kitsune = XY_kitsune_val[:, metrics[metric]]
+    X_val_kitsune = XY_kitsune_val[:, :-2]
+    XY_kitsune_test = np.loadtxt(directory_data + kitsune + "_test_latent_" + str(i) +".csv", delimiter=',')
+    y_test_kitsune = XY_kitsune_test[:, metrics[metric]]
+    X_test_kitsune = XY_kitsune_test[:, :-2]
     
+    XY_ciciot_train = np.loadtxt(directory_data + ciciot + "_train_latent_" + str(i) +".csv", delimiter=',')
+    y_train_ciciot = XY_ciciot_train[:, metrics[metric]]
+    X_train_ciciot = XY_ciciot_train[:, :-2]
+    XY_ciciot_val = np.loadtxt(directory_data + ciciot + "_val_latent_" + str(i) +".csv", delimiter=',')
+    y_val_ciciot = XY_ids_val[:, metrics[metric]]
+    X_val_ciciot = XY_ciciot_val[:, :-2]
+    XY_ciciot_test = np.loadtxt(directory_data + ciciot + "_test_latent_" + str(i) +".csv", delimiter=',')
+    y_test_ciciot = XY_ciciot_test[:, metrics[metric]]
+    X_test_ciciot = XY_ciciot_test[:, :-2]
     
-    plt.savefig(filename+".png", dpi=300 )
+    yi_train_kdd = pd.DataFrame(data={'ensemble': y_train_kdd, 'prediction': y_pred_train_kdd})
+    yi_val_kdd = pd.DataFrame(data={'ensemble': y_val_kdd, 'prediction': y_pred_val_kdd})
+    yi_test_kdd = pd.DataFrame(data={'ensemble': y_test_kdd, 'prediction': y_pred_test_kdd})
     
-def training_loss(cp, edl, mcd, vae, dbname="kdd"):
-     
-    # Generate a sequence of integers to represent the epoch numbers
-    epochs = range(1, len(cp)+1)
-     
-    # Plot and label the training and validation loss values
-    plt.plot(epochs, cp, label='CP', color='black')
-    plt.plot(epochs, edl, label='EDL', color='red')
-    plt.plot(epochs, mcd, label='MCD', color='blue')
-    #plt.plot(epochs, vae, label='VAEs', color='green')
-
-     
-    # Add in a title and axes labels
-    #plt.title('Training Loss')
-    plt.xlabel('Epochs')
-    plt.ylabel('Loss')
-     
-    # Set the tick locations
-    plt.xticks(np.arange(0, len(cp)+1, 2))
-     
-    # Display the plot
-    plt.legend(loc='best')
-    plt.savefig("outputs/"+dbname+"_training.png", dpi=300 )
-    plt.show()
-
-def data_set_distribution(X, y, filename):
-    pca = PCA(n_components=2)
-    X = pca.fit_transform(X)
-    plt.scatter(X[y==0, 0], X[y==0, 1], s=3, c='blue', alpha=0.5)
-    plt.scatter(X[y==1, 0], X[y==1, 1], s=3, c='red', alpha=0.5)
-    plt.savefig(filename+".png", dpi=300 )
-    plt.show()
+    yi_train_nsl = pd.DataFrame(data={'ensemble': y_train_nsl, 'prediction': y_pred_train_nsl})
+    yi_val_nsl = pd.DataFrame(data={'ensemble': y_val_nsl, 'prediction': y_pred_val_nsl})
+    yi_test_nsl = pd.DataFrame(data={'ensemble': y_test_nsl, 'prediction': y_pred_test_nsl})
+    
+    yi_train_ids = pd.DataFrame(data={'ensemble': y_train_ids, 'prediction': y_pred_train_ids})
+    yi_val_ids = pd.DataFrame(data={'ensemble': y_val_ids, 'prediction': y_pred_val_ids})
+    yi_test_ids = pd.DataFrame(data={'ensemble': y_test_ids, 'prediction': y_pred_test_ids})
+    
+    yi_train_kitsune = pd.DataFrame(data={'ensemble': y_train_kitsune, 'prediction': y_pred_train_kitsune})
+    yi_val_kitsune = pd.DataFrame(data={'ensemble': y_val_kitsune, 'prediction': y_pred_val_kitsune})
+    yi_test_kitsune = pd.DataFrame(data={'ensemble': y_test_kitsune, 'prediction': y_pred_test_kitsune})
+    
+    yi_train_ciciot = pd.DataFrame(data={'ensemble': y_train_ciciot, 'prediction': y_pred_train_ciciot})
+    yi_val_ciciot = pd.DataFrame(data={'ensemble': y_val_ciciot, 'prediction': y_pred_val_ciciot})
+    yi_test_ciciot = pd.DataFrame(data={'ensemble': y_test_ciciot, 'prediction': y_pred_test_ciciot})
+    
+    # mse
+    print("mse kdd", mse(y_train_kdd, y_pred_train_kdd), mse(y_val_kdd, y_pred_val_kdd), mse(y_test_kdd, y_pred_test_kdd))
+    print("mse nsl", mse(y_train_nsl, y_pred_train_nsl), mse(y_val_nsl, y_pred_val_nsl), mse(y_test_nsl, y_pred_test_nsl))
+    print("mse ids", mse(y_train_ids, y_pred_train_ids), mse(y_val_ids, y_pred_val_ids), mse(y_test_ids, y_pred_test_ids))
+    print("mse kitsune", mse(y_train_kitsune, y_pred_train_kitsune), mse(y_val_kitsune, y_pred_val_kitsune), mse(y_test_kitsune, y_pred_test_kitsune))
+    print("mse ciciot", mse(y_train_ciciot, y_pred_train_ciciot), mse(y_val_ciciot, y_pred_val_ciciot), mse(y_test_ciciot, y_pred_test_ciciot))
+    
+    # plots
+    fig, axes = plt.subplots(5, 3, figsize=(9, 9), sharey=True)
+    #kdd
+    sns.scatterplot(ax=axes[0, 0], data=yi_train_kdd, x="ensemble", y="prediction", color='blue')
+    axes[0, 0].set_title("train")
+    sns.scatterplot(ax=axes[0, 1], data=yi_val_kdd, x="ensemble", y="prediction", color='green')
+    axes[0, 1].set_title("val")
+    sns.scatterplot(ax=axes[0, 2], data=yi_test_kdd, x="ensemble", y="prediction", color='red')
+    axes[0, 2].set_title("test")
+    #nsl
+    sns.scatterplot(ax=axes[1, 0], data=yi_train_nsl, x="ensemble", y="prediction", color='blue')
+    sns.scatterplot(ax=axes[1, 1], data=yi_val_nsl, x="ensemble", y="prediction", color='green')
+    sns.scatterplot(ax=axes[1, 2], data=yi_test_nsl, x="ensemble", y="prediction", color='red')
+    #ids
+    sns.scatterplot(ax=axes[2, 0], data=yi_train_ids, x="ensemble", y="prediction", color='blue')
+    sns.scatterplot(ax=axes[2, 1], data=yi_val_ids, x="ensemble", y="prediction", color='green')
+    sns.scatterplot(ax=axes[2, 2], data=yi_test_ids, x="ensemble", y="prediction", color='red')
+    #kitsune
+    sns.scatterplot(ax=axes[3, 0], data=yi_train_kitsune, x="ensemble", y="prediction", color='blue')
+    sns.scatterplot(ax=axes[3, 1], data=yi_val_kitsune, x="ensemble", y="prediction", color='green')
+    sns.scatterplot(ax=axes[3, 2], data=yi_test_kitsune, x="ensemble", y="prediction", color='red')
+    #ciciot
+    sns.scatterplot(ax=axes[4, 0], data=yi_train_ciciot, x="ensemble", y="prediction", color='blue')
+    sns.scatterplot(ax=axes[4, 1], data=yi_val_ciciot, x="ensemble", y="prediction", color='green')
+    sns.scatterplot(ax=axes[4, 2], data=yi_test_ciciot, x="ensemble", y="prediction", color='red')
+    plt.savefig(filename+".png", dpi=300)  
+    
+    # Pearson’s Correlation
+    print("pcc kdd", pcc(y_train_kdd, y_pred_train_kdd)[0], pcc(y_val_kdd, y_pred_val_kdd)[0], pcc(y_test_kdd, y_pred_test_kdd)[0])
+    print("pcc nsl", pcc(y_train_nsl, y_pred_train_nsl)[0], pcc(y_val_nsl, y_pred_val_nsl)[0], pcc(y_test_nsl, y_pred_test_nsl)[0])
+    print("pcc ids", pcc(y_train_ids, y_pred_train_ids)[0], pcc(y_val_ids, y_pred_val_ids)[0], pcc(y_test_ids, y_pred_test_ids)[0])
+    print("pcc kitsune", pcc(y_train_kitsune, y_pred_train_kitsune)[0], pcc(y_val_kitsune, y_pred_val_kitsune)[0], pcc(y_test_kitsune, y_pred_test_kitsune)[0])
+    print("pcc ciciot", pcc(y_train_ciciot, y_pred_train_ciciot)[0], pcc(y_val_ciciot, y_pred_val_ciciot)[0], pcc(y_test_ciciot, y_pred_test_ciciot)[0])
+    
+    # Spearman’s Correlation
+    print("scc kdd", scc(y_train_kdd, y_pred_train_kdd)[0], scc(y_val_kdd, y_pred_val_kdd)[0], scc(y_test_kdd, y_pred_test_kdd)[0])
+    print("scc nsl", scc(y_train_nsl, y_pred_train_nsl)[0], scc(y_val_nsl, y_pred_val_nsl)[0], scc(y_test_nsl, y_pred_test_nsl)[0])
+    print("scc ids", scc(y_train_ids, y_pred_train_ids)[0], scc(y_val_ids, y_pred_val_ids)[0], scc(y_test_ids, y_pred_test_ids)[0])
+    print("scc kitsune", scc(y_train_kitsune, y_pred_train_kitsune)[0], scc(y_val_kitsune, y_pred_val_kitsune)[0], scc(y_test_kitsune, y_pred_test_kitsune)[0])
+    print("scc ciciot", scc(y_train_ciciot, y_pred_train_ciciot)[0], scc(y_val_ciciot, y_pred_val_ciciot)[0], scc(y_test_ciciot, y_pred_test_ciciot)[0])
