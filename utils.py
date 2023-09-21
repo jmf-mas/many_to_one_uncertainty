@@ -135,7 +135,7 @@ def evaluate_ae():
                ciciot: XY_ciciot_test[selection_ciciot]}
     
     for config in configs:
-        print("evaluating "+config+" data set")
+        print("evaluating on "+config+" data set")
         XY_test = configs[config]
         X_test, y_test = XY_test[:, :-1], XY_test[:, -1]
         X_test = X_test.astype('float32')
@@ -150,7 +150,7 @@ def evaluate_ae():
             ae_model.to(device)
             save_test_scores(ae_model, criterions[single], config, X_test, y_test, eta)
             print("--evaluation for ae_model_"+str(single)+" done")
-        print("evaluating "+config+" data set done")
+        print("evaluating on "+config+" data set done")
 
 
 def build_latent_representation():
@@ -205,9 +205,9 @@ def build_latent_representation():
                       "test":configs_test}
     
     for configs in configurations:
-        print("evaluating on "+configs+" starts...")
+        print("building latent representation on "+configs+" starts...")
         for config in configurations[configs]:
-            print("--evaluating "+config+" data set starts... ")
+            print("--building "+config+" data set starts... ")
             if configs in ["test", "val"]:
                 XY = configurations[configs][config]
                 X, _ = XY[:, :-1], XY[:, -1]
@@ -244,13 +244,13 @@ def build_latent_representation():
                 latent_rep = np.concatenate((latent_rep, std_scores.reshape(-1, 1)), axis=1)
                 latent_rep = np.concatenate((latent_rep, mean_entropies.reshape(-1, 1)), axis=1)
                 np.savetxt(directory_data + config + "_" + configs + "_latent_" + str(selected_model_id) +".csv", latent_rep, delimiter=',')
-            print("--evaluating "+config+" data set done")
-        print("evaluating "+configs+" done")
+            print("--building "+config+" data set done")
+        print("building latent representation on "+configs+" done")
             
 def train_mlp(batch_size = 32, lr = 1e-5, w_d = 1e-5, momentum = 0.9, epochs = 5):
     
     for selected_model_id in candidates:
-        print("training on candidate "+str(selected_model_id) + " starts...")
+        print("regression training on candidate "+str(selected_model_id) + " starts...")
         XY_kdd_train = np.loadtxt(directory_data + kdd + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
         XY_kdd_val = np.loadtxt(directory_data + kdd + "_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
     
@@ -292,7 +292,7 @@ def train_mlp(batch_size = 32, lr = 1e-5, w_d = 1e-5, momentum = 0.9, epochs = 5
                 mlp_model.save()
                 print("----training on "+config+" data set done")
             print("--training for metric "+ metric + " done")
-        print("training on candidate "+str(selected_model_id) + " done")
+        print("regression training on candidate "+str(selected_model_id) + " done")
             
 def evaluate_mlp():
     
