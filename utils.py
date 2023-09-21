@@ -85,9 +85,14 @@ def train_ae(batch_size = 32, lr = 1e-5, w_d = 1e-5, momentum = 0.9, epochs = 5)
               ciciot: [X_ciciot_train, XY_ciciot_val]
               }
     
+    configs = {
+              kitsune: [X_kitsune_train, XY_kitsune_val],
+              ciciot: [X_ciciot_train, XY_ciciot_val]
+              }
+    
     
     for config in configs:
-        print("training on "+config+" data set")
+        print("training on "+config+" data set starts ...")
         X_train, XY_val = configs[config]
         X_val, y_val = XY_val[:, :-1], XY_val[:, -1]
         
@@ -96,16 +101,15 @@ def train_ae(batch_size = 32, lr = 1e-5, w_d = 1e-5, momentum = 0.9, epochs = 5)
         X_train = torch.from_numpy(X_train)
         X_val = torch.from_numpy(X_val)
         
-        print("training for EDL")
         for single in range(sample_size):
-            print("training for ae_model_"+str(single))
+            print("--training for ae_model_"+str(single)+" starts ...")
             model_name = "ae_model_"+config+"_"+str(single)
             ae_model = AE(X_train.shape[1], model_name)
             ae_train(ae_model, X_train, l_r = lr, w_d = w_d, n_epochs = epochs, batch_size = batch_size)
             ae_model.save()
             save_val_scores(ae_model, criterions[single], config, X_val, y_val)
-            print("training for ae_model_"+str(single)+" done")   
-        print("---------------------------------------------------------------------")
+            print("--training for ae_model_"+str(single)+" done")  
+        print("training on "+config+" data set done")
 
     
 def evaluate_ae():
@@ -137,17 +141,15 @@ def evaluate_ae():
         X_test = X_test.astype('float32')
         X_test = torch.from_numpy(X_test)
         
-        print("evaluation for EDL")
         for single in range(sample_size):
-            print("evaluation for ae_model_"+str(single))
+            print("--evaluation for ae_model_"+str(single))
             model_name = "ae_model_"+config+"_"+str(single)
             eta = np.loadtxt(directory_output + config + "_threshold_" + model_name + ".csv")
             ae_model = AE(X_test.shape[1], model_name)
             ae_model.load()
             ae_model.to(device)
             save_test_scores(ae_model, criterions[single], config, X_test, y_test, eta)
-            print("evaluation for ae_model_"+str(single)+" done")
-            print("---------------------------------------------------------------------")
+            print("--evaluation for ae_model_"+str(single)+" done")
         print("evaluating "+config+" data set done")
 
 
@@ -202,35 +204,37 @@ def build_latent_representation():
                       "val": configs_val,
                       "test":configs_test}
     
-    for selected_model_id in candidates:
-        for configs in configurations:
-            for config in configurations[configs]:
-                print("evaluating "+config+" data set on candidate "+str(selected_model_id))
-                if configs in ["test", "val"]:
-                    XY = configurations[configs][config]
-                    X, _ = XY[:, :-1], XY[:, -1]
-                else:
-                    X = configurations[configs][config]
+    for configs in configurations:
+        print("evaluating on "+configs+" starts...")
+        for config in configurations[configs]:
+            print("--evaluating "+config+" data set starts... ")
+            if configs in ["test", "val"]:
+                XY = configurations[configs][config]
+                X, _ = XY[:, :-1], XY[:, -1]
+            else:
+                X = configurations[configs][config]
+            
+            X = X.astype('float32')
+            X = torch.from_numpy(X)
                 
-                X = X.astype('float32')
-                X = torch.from_numpy(X)
-                    
-                scores = []
-                entropies = []
-                for single in range(sample_size):
-                    print("evaluation for ae_model_"+str(single) + " on candidate "+str(selected_model_id))
-                    model_name = "ae_model_"+config+"_"+str(single)
-                    ae_model = AE(X.shape[1], model_name)
-                    eta = np.loadtxt(directory_output + config + "_threshold_" + model_name + ".csv")
-                    ae_model.load()
-                    ae_model.to(device)
-                    scores.append(get_scores(ae_model, criterions[single], X))
-                    entropies.append(get_entropies(ae_model, criterions[single], eta, X))
-                scores = np.array(scores)
-                entropies = np.array(entropies)
-                std_scores = np.std(scores, axis=0)
-                mean_entropies = np.std(entropies, axis=0)
-                # create latent representation with the randomly selected model
+            scores = []
+            entropies = []
+            for single in range(sample_size):
+                print("----evaluation for ae_model_"+str(single)+" starts...")
+                model_name = "ae_model_"+config+"_"+str(single)
+                ae_model = AE(X.shape[1], model_name)
+                eta = np.loadtxt(directory_output + config + "_threshold_" + model_name + ".csv")
+                ae_model.load()
+                ae_model.to(device)
+                scores.append(get_scores(ae_model, criterions[single], X))
+                entropies.append(get_entropies(ae_model, criterions[single], eta, X))
+                print("----evaluation for ae_model_"+str(single)+" done")
+            scores = np.array(scores)
+            entropies = np.array(entropies)
+            std_scores = np.std(scores, axis=0)
+            mean_entropies = np.std(entropies, axis=0)
+            # create latent representation with the randomly selected model
+            for selected_model_id in candidates:
                 selected_model_name = "ae_model_"+config+"_"+str(selected_model_id)
                 selected_ae_model = AE(X.shape[1], selected_model_name)
                 selected_ae_model.load()
@@ -240,11 +244,13 @@ def build_latent_representation():
                 latent_rep = np.concatenate((latent_rep, std_scores.reshape(-1, 1)), axis=1)
                 latent_rep = np.concatenate((latent_rep, mean_entropies.reshape(-1, 1)), axis=1)
                 np.savetxt(directory_data + config + "_" + configs + "_latent_" + str(selected_model_id) +".csv", latent_rep, delimiter=',')
-            print("evaluating "+configs+" data set done on candidate "+str(selected_model_id))
+            print("--evaluating "+config+" data set done")
+        print("evaluating "+configs+" done")
             
 def train_mlp(batch_size = 32, lr = 1e-5, w_d = 1e-5, momentum = 0.9, epochs = 5):
     
     for selected_model_id in candidates:
+        print("training on candidate "+str(selected_model_id) + " starts...")
         XY_kdd_train = np.loadtxt(directory_data + kdd + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
         XY_kdd_val = np.loadtxt(directory_data + kdd + "_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
     
@@ -270,8 +276,9 @@ def train_mlp(batch_size = 32, lr = 1e-5, w_d = 1e-5, momentum = 0.9, epochs = 5
         
         
         for metric in metrics:
+            print("--training for metric "+ metric + " starts...")
             for config in configs:
-                print("training on "+config+" data set on candidate "+str(selected_model_id))
+                print("----training on "+config+" data set starts...")
                 XY_train, XY_val = configs[config]
                 X_train, y_train = XY_train[:, :-2], XY_train[:, metrics[metric]]
                 X_val, y_val = XY_val[:, :-2], XY_val[:, metrics[metric]]
@@ -283,12 +290,14 @@ def train_mlp(batch_size = 32, lr = 1e-5, w_d = 1e-5, momentum = 0.9, epochs = 5
                 mlp_model = MLP(X_train.shape[1], model_reg_name + metric + "_" + str(selected_model_id))
                 mlp_train(mlp_model, X_train, y_train, X_val, y_val, l_r = lr, w_d = w_d, n_epochs = epochs, batch_size = batch_size)
                 mlp_model.save()
-                print("training for mlp_model on " + config + " data set done for metric "+metric+ " on candidate "+str(selected_model_id))
-            print("---------------------------------------------------------------------")
+                print("----training on "+config+" data set done")
+            print("--training for metric "+ metric + " done")
+        print("training on candidate "+str(selected_model_id) + " done")
             
 def evaluate_mlp():
     
     for selected_model_id in candidates:
+        print("evaluating on candidate "+str(selected_model_id) + " starts...")
         XY_kdd_train = np.loadtxt(directory_data + kdd + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
         XY_kdd_val = np.loadtxt(directory_data + kdd + "_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
         XY_kdd_test = np.loadtxt(directory_data + kdd +"_test_latent_" + str(selected_model_id) +".csv", delimiter=',')
@@ -316,8 +325,9 @@ def evaluate_mlp():
                   ciciot: [XY_ciciot_train, XY_ciciot_val, XY_ciciot_test]}
         
         for metric in metrics:
+            print("--evaluating for metric "+ metric + " starts...")
             for config in configs:
-                print("evaluating "+config+" data set on candidate "+str(selected_model_id))
+                print("----evaluating  on "+config+" data set starts... ")
                 XY_train, XY_val, XY_test = configs[config]
                 X_train = XY_train[:, :-2]
                 X_val = XY_val[:, :-2]
@@ -337,8 +347,8 @@ def evaluate_mlp():
                 save_uncertainty(mlp_model, config, X_val, label="val_" + metric + "_" + str(selected_model_id))
                 save_uncertainty(mlp_model, config, X_test, label="test_" + metric + "_" + str(selected_model_id))
         
-                print("evaluating for mlp model on "+config+" data set done for metric " + metric+ " on candidate "+str(selected_model_id))
-
-
+                print("----evaluating  on "+config+" data set done ")
+            print("--evaluating for metric "+ metric + " done")
+        print("evaluating on candidate "+str(selected_model_id) + " done")
 
 
