@@ -110,8 +110,11 @@ def preprocess_ciciot_data(data):
     XY = pd.DataFrame(data = X_scaled,  
                   columns = X.columns, index=X.index)
     XY['label'] = y
+    X = XY.values[:, :-1]
+    y = XY.values[:, -1]
+    y = y.astype(int)
     
-    return XY
+    return X, y
 
 def preprocess_kdd_data(dataframe):
     df_num = dataframe.drop(cat_cols_kdd, axis=1)
@@ -196,12 +199,12 @@ def process_raw_data():
     print("processing kitsune")
     file_id='1e-5ky0j6SG5D3ODxkHxe73W6tKErsxNZ'
     dwn_url='https://drive.google.com/uc?id=' + file_id
-    X = pd.read_csv("data/ARP_MitM_dataset.csv", header = None)
-    y = pd.read_csv("data/ARP_MitM_labels.csv", header = None)
-
+    X = pd.read_csv("data/ARP_MitM_dataset.csv", header = None, low_memory=False)
+    y = pd.read_csv("data/ARP_MitM_labels.csv", header = None, low_memory=False)
+    y = y.values[1:, -1]
     X, y = preprocess_kitsune_data(X, y)
     data_kitsune = np.concatenate((X, y.reshape(1, -1).T), axis=1)
-    np.savetxt("data/kitsune.csv", data_kitsune.values, delimiter=',')
+    np.savetxt("data/kitsune.csv", data_kitsune, delimiter=',')
     print("processing kitsune done")
     
     # ciciot
@@ -217,8 +220,8 @@ def process_raw_data():
     df['label'] = df['label'].map(mapping)
 
     X, y = preprocess_ciciot_data(df)
-    data_kitsune = np.concatenate((X, y.reshape(1, -1).T), axis=1)
-    np.savetxt("data/ciciot.csv", data_kitsune.values, delimiter=',')
+    data_ciciot = np.concatenate((X, y.reshape(1, -1).T), axis=1)
+    np.savetxt("data/ciciot.csv", data_ciciot, delimiter=',')
     print("processing ciciot done")
     
 def split_and_save_data():
