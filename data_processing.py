@@ -147,6 +147,7 @@ def save_processed_data(XY, filename, train_rate = .65, val_rate = 0.2):
     X_test, X_val, y_test, y_val = train_test_split(X_test, y_test, test_size=val_rate, random_state=42)
     XY_test = np.concatenate((X_test, y_test.reshape(-1, 1)), axis=1)
     XY_val = np.concatenate((X_val, y_val.reshape(-1, 1)), axis=1)
+    print(X_train.shape, XY_val.shape, XY_test.shape)
     np.savetxt(data_directory + filename+"_train"+file_extension, X_train, delimiter=",")
     np.savetxt(data_directory + filename+"_val"+file_extension, XY_val, delimiter=",")
     np.savetxt(data_directory + filename+"_test"+file_extension, XY_test, delimiter=",")
@@ -211,14 +212,8 @@ def process_raw_data():
     print("processing ciciot")
     file_id='1e-5ky0j6SG5D3ODxkHxe73W6tKErsxNZ'
     dwn_url='https://drive.google.com/uc?id=' + file_id
-    file_paths = glob.glob( 'data/part*.csv')
-    df = pd.DataFrame()
-    for file_path in tqdm(file_paths, desc='Processing files', unit='file'):
-        dff = pd.read_csv(file_path)
-        df = pd.concat([df, dff], ignore_index=True)
-    
+    df = pd.read_csv("data/ciciot2023.csv")
     df['label'] = df['label'].map(mapping)
-
     X, y = preprocess_ciciot_data(df)
     data_ciciot = np.concatenate((X, y.reshape(1, -1).T), axis=1)
     np.savetxt("data/ciciot.csv", data_ciciot, delimiter=',')
@@ -235,7 +230,7 @@ def split_and_save_data():
     XY = np.loadtxt(data_directory+"kitsune.csv", delimiter=',')
     save_processed_data(XY, "kitsune", train_rate = .08, val_rate = 0.3)
     XY = np.loadtxt(data_directory+"ciciot.csv", delimiter=',')
-    save_processed_data(XY, "ciciot", train_rate = .7, val_rate = 0.3)
+    save_processed_data(XY, "ciciot", train_rate = .3, val_rate = 0.2)
     print("splitting data done")
 
     

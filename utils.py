@@ -85,11 +85,6 @@ def train_ae(batch_size = 32, lr = 1e-5, w_d = 1e-5, momentum = 0.9, epochs = 5)
               ciciot: [X_ciciot_train, XY_ciciot_val]
               }
     
-    configs = {
-              kitsune: [X_kitsune_train, XY_kitsune_val],
-              ciciot: [X_ciciot_train, XY_ciciot_val]
-              }
-    
     
     for config in configs:
         print("training on "+config+" data set starts ...")
@@ -101,7 +96,7 @@ def train_ae(batch_size = 32, lr = 1e-5, w_d = 1e-5, momentum = 0.9, epochs = 5)
         X_train = torch.from_numpy(X_train)
         X_val = torch.from_numpy(X_val)
         
-        for single in range(sample_size):
+        for single in range(10, sample_size):
             print("--training for ae_model_"+str(single)+" starts ...")
             model_name = "ae_model_"+config+"_"+str(single)
             ae_model = AE(X_train.shape[1], model_name)
@@ -121,12 +116,14 @@ def evaluate_ae():
     XY_ciciot_test = np.loadtxt(directory_data + ciciot + "_test.csv", delimiter=',')
     
     
-    n = [i for i in range(len(XY_ids_test))]
-    selection_ids = np.random.choice(n, size = 70000, replace=False)
+    n_ids = [i for i in range(len(XY_ids_test))]
+    selection_ids = np.random.choice(n_ids, size = 70000, replace=False)
     np.savetxt(directory_output + "_selection_ids.csv", selection_ids)
-    selection_kitsune = np.random.choice(n, size = 100000, replace=False)
+    n_kitsune = [i for i in range(len(XY_kitsune_test))]
+    selection_kitsune = np.random.choice(n_kitsune, size = 100000, replace=False)
     np.savetxt(directory_output + "_selection_kitsune.csv", selection_kitsune)
-    selection_ciciot = np.random.choice(n, size = 120000, replace=False)
+    n_ciciot = [i for i in range(len(XY_ciciot_test))]
+    selection_ciciot = np.random.choice(n_ciciot, size = 120000, replace=False)
     np.savetxt(directory_output + "_selection_ciciot.csv", selection_ciciot)
     configs = {kdd: XY_kdd_test, 
                nsl: XY_nsl_test,
@@ -185,12 +182,14 @@ def build_latent_representation():
                ciciot: XY_ciciot_val}
     
     
-    n = [i for i in range(len(XY_ids_test))]
-    selection_ids = np.random.choice(n, size = 70000, replace=False)
+    n_ids = [i for i in range(len(XY_ids_test))]
+    selection_ids = np.random.choice(n_ids, size = 70000, replace=False)
     np.savetxt(directory_output + "_selection_ids.csv", selection_ids)
-    selection_kitsune = np.random.choice(n, size = 100000, replace=False)
+    n_kitsune = [i for i in range(len(XY_kitsune_test))]
+    selection_kitsune = np.random.choice(n_kitsune, size = 100000, replace=False)
     np.savetxt(directory_output + "_selection_kitsune.csv", selection_kitsune)
-    selection_ciciot = np.random.choice(n, size = 120000, replace=False)
+    n_ciciot = [i for i in range(len(XY_ciciot_test))]
+    selection_ciciot = np.random.choice(n_ciciot, size = 120000, replace=False)
     np.savetxt(directory_output + "_selection_ciciot.csv", selection_ciciot)
     configs_test = {kdd: XY_kdd_test,
                nsl: XY_nsl_test,
@@ -287,7 +286,7 @@ def train_mlp(batch_size = 32, lr = 1e-5, w_d = 1e-5, momentum = 0.9, epochs = 5
                 X_train = X_train.astype('float32')
                 X_train = torch.from_numpy(X_train)
                 X_val = torch.from_numpy(X_val)
-                mlp_model = MLP(X_train.shape[1], model_reg_name + metric + "_" + str(selected_model_id))
+                mlp_model = MLP(X_train.shape[1], model_reg_name + "_" + metric + "_" + str(selected_model_id))
                 mlp_train(mlp_model, X_train, y_train, X_val, y_val, l_r = lr, w_d = w_d, n_epochs = epochs, batch_size = batch_size)
                 mlp_model.save()
                 print("----training on "+config+" data set done")
@@ -339,7 +338,7 @@ def evaluate_mlp():
                 X_val = torch.from_numpy(X_val)
                 X_test = torch.from_numpy(X_test)
                
-                mlp_model = MLP(X_train.shape[1], model_reg_name + metric + "_" + str(selected_model_id))
+                mlp_model = MLP(X_train.shape[1], model_reg_name + "_" + metric + "_" + str(selected_model_id))
                 mlp_model.load()
                 mlp_model.to(device)
                 

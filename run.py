@@ -24,7 +24,7 @@ def run_ae(batch_size, lr, w_d, momentum, epochs, is_train, to_process_data):
         init()
         train_ae(batch_size, lr, w_d, momentum, epochs)
     
-    #build_latent_representation()
+    build_latent_representation()
     
 def run_mlp(batch_size, lr, w_d, momentum, epochs, is_train_mlp):
     
