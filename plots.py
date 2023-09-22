@@ -5,6 +5,7 @@ from scipy.stats import pearsonr as pcc
 from scipy.stats import spearmanr as scc
 import pandas as pd
 import seaborn as sns
+from sklearn.decomposition import PCA
 
 directory_data = "data/"
 directory_outputs = "outputs/"
@@ -108,6 +109,13 @@ def get_plots(i, metric, filename):
     yi_val_ciciot = pd.DataFrame(data={'ensemble': y_val_ciciot, 'prediction': y_pred_val_ciciot})
     yi_test_ciciot = pd.DataFrame(data={'ensemble': y_test_ciciot, 'prediction': y_pred_test_ciciot})
     
+    pca = PCA(n_components=1)
+    yi_kdd_pca = pd.DataFrame(data={'pca component': pca.fit_transform(X_test_kdd), 'uncertainty': y_test_kdd})
+    yi_nsl_pca = pd.DataFrame(data={'pca component': pca.fit_transform(X_test_nsl), 'uncertainty': y_test_nsl})
+    yi_ids_pca = pd.DataFrame(data={'pca component': pca.fit_transform(X_test_ids), 'uncertainty': y_test_ids})
+    yi_kitsune_pca = pd.DataFrame(data={'pca component': pca.fit_transform(X_test_kitsune), 'uncertainty': y_test_kitsune})
+    yi_ciciot_pca = pd.DataFrame(data={'pca component': pca.fit_transform(X_test_ciciot), 'uncertainty': y_test_ciciot})
+
     # mse
     print("mse kdd", mse(y_train_kdd, y_pred_train_kdd), mse(y_val_kdd, y_pred_val_kdd), mse(y_test_kdd, y_pred_test_kdd))
     print("mse nsl", mse(y_train_nsl, y_pred_train_nsl), mse(y_val_nsl, y_pred_val_nsl), mse(y_test_nsl, y_pred_test_nsl))
@@ -141,6 +149,21 @@ def get_plots(i, metric, filename):
     sns.scatterplot(ax=axes[4, 1], data=yi_val_ciciot, x="ensemble", y="prediction", color='green')
     sns.scatterplot(ax=axes[4, 2], data=yi_test_ciciot, x="ensemble", y="prediction", color='red')
     plt.savefig(filename+".png", dpi=300)  
+    
+    
+    fig, axes = plt.subplots(1, 5, figsize=(2, 10), sharey=True)
+    sns.scatterplot(ax=axes[0, 0], data=yi_kdd_pca, x="pca component", y="uncertainty", color='blue')
+    axes[0, 0].set_title("kdd")
+    sns.scatterplot(ax=axes[0, 1], data=yi_nsl_pca, x="pca component", y="uncertainty", color='blue')
+    axes[0, 1].set_title("nsl")
+    sns.scatterplot(ax=axes[0, 2], data=yi_ids_pca, x="pca component", y="uncertainty", color='blue')
+    axes[0, 2].set_title("ids")
+    sns.scatterplot(ax=axes[0, 3], data=yi_kitsune_pca, x="pca component", y="uncertainty", color='blue')
+    axes[0, 3].set_title("kitsune")
+    sns.scatterplot(ax=axes[0, 4], data=yi_ciciot_pca, x="pca component", y="uncertainty", color='blue')
+    axes[0, 4].set_title("ciciot")
+
+    plt.savefig(filename+"_description.png", dpi=300)  
     
     # Pearson’s Correlation
     print("pcc kdd", pcc(y_train_kdd, y_pred_train_kdd)[0], pcc(y_val_kdd, y_pred_val_kdd)[0], pcc(y_test_kdd, y_pred_test_kdd)[0])
