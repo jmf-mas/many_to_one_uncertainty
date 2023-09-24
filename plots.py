@@ -89,25 +89,25 @@ def get_plots(i, metric, filename):
     y_test_ciciot = XY_ciciot_test[:, metrics[metric]]
     X_test_ciciot = XY_ciciot_test[:, :-2]
     
-    yi_train_kdd = pd.DataFrame(data={'ensemble': y_train_kdd, 'prediction': y_pred_train_kdd})
-    yi_val_kdd = pd.DataFrame(data={'ensemble': y_val_kdd, 'prediction': y_pred_val_kdd})
-    yi_test_kdd = pd.DataFrame(data={'ensemble': y_test_kdd, 'prediction': y_pred_test_kdd})
+    yi_train_kdd = pd.DataFrame(data={'ensemble': y_train_kdd, 'inference': y_pred_train_kdd})
+    yi_val_kdd = pd.DataFrame(data={'ensemble': y_val_kdd, 'inference': y_pred_val_kdd})
+    yi_test_kdd = pd.DataFrame(data={'ensemble': y_test_kdd, 'inference': y_pred_test_kdd})
     
-    yi_train_nsl = pd.DataFrame(data={'ensemble': y_train_nsl, 'prediction': y_pred_train_nsl})
-    yi_val_nsl = pd.DataFrame(data={'ensemble': y_val_nsl, 'prediction': y_pred_val_nsl})
-    yi_test_nsl = pd.DataFrame(data={'ensemble': y_test_nsl, 'prediction': y_pred_test_nsl})
+    yi_train_nsl = pd.DataFrame(data={'ensemble': y_train_nsl, 'inference': y_pred_train_nsl})
+    yi_val_nsl = pd.DataFrame(data={'ensemble': y_val_nsl, 'inference': y_pred_val_nsl})
+    yi_test_nsl = pd.DataFrame(data={'ensemble': y_test_nsl, 'inference': y_pred_test_nsl})
     
-    yi_train_ids = pd.DataFrame(data={'ensemble': y_train_ids, 'prediction': y_pred_train_ids})
-    yi_val_ids = pd.DataFrame(data={'ensemble': y_val_ids, 'prediction': y_pred_val_ids})
-    yi_test_ids = pd.DataFrame(data={'ensemble': y_test_ids, 'prediction': y_pred_test_ids})
+    yi_train_ids = pd.DataFrame(data={'ensemble': y_train_ids, 'inference': y_pred_train_ids})
+    yi_val_ids = pd.DataFrame(data={'ensemble': y_val_ids, 'inference': y_pred_val_ids})
+    yi_test_ids = pd.DataFrame(data={'ensemble': y_test_ids, 'inference': y_pred_test_ids})
     
-    yi_train_kitsune = pd.DataFrame(data={'ensemble': y_train_kitsune, 'prediction': y_pred_train_kitsune})
-    yi_val_kitsune = pd.DataFrame(data={'ensemble': y_val_kitsune, 'prediction': y_pred_val_kitsune})
-    yi_test_kitsune = pd.DataFrame(data={'ensemble': y_test_kitsune, 'prediction': y_pred_test_kitsune})
+    yi_train_kitsune = pd.DataFrame(data={'ensemble': y_train_kitsune, 'inference': y_pred_train_kitsune})
+    yi_val_kitsune = pd.DataFrame(data={'ensemble': y_val_kitsune, 'inference': y_pred_val_kitsune})
+    yi_test_kitsune = pd.DataFrame(data={'ensemble': y_test_kitsune, 'inference': y_pred_test_kitsune})
     
     yi_train_ciciot = pd.DataFrame(data={'ensemble': y_train_ciciot, 'prediction': y_pred_train_ciciot})
-    yi_val_ciciot = pd.DataFrame(data={'ensemble': y_val_ciciot, 'prediction': y_pred_val_ciciot})
-    yi_test_ciciot = pd.DataFrame(data={'ensemble': y_test_ciciot, 'prediction': y_pred_test_ciciot})
+    yi_val_ciciot = pd.DataFrame(data={'ensemble': y_val_ciciot, 'inference': y_pred_val_ciciot})
+    yi_test_ciciot = pd.DataFrame(data={'ensemble': y_test_ciciot, 'inference': y_pred_test_ciciot})
     
     # mse
     print("mse kdd", mse(y_train_kdd, y_pred_train_kdd), mse(y_val_kdd, y_pred_val_kdd), mse(y_test_kdd, y_pred_test_kdd))
@@ -119,28 +119,28 @@ def get_plots(i, metric, filename):
     # plots
     fig, axes = plt.subplots(5, 3, figsize=(9, 9), sharey=True)
     #kdd
-    sns.scatterplot(ax=axes[0, 0], data=yi_train_kdd, x="ensemble", y="prediction", color='blue')
+    sns.scatterplot(ax=axes[0, 0], data=yi_train_kdd, x="ensemble", y="inference", color='blue')
     axes[0, 0].set_title("train")
-    sns.scatterplot(ax=axes[0, 1], data=yi_val_kdd, x="ensemble", y="prediction", color='green')
+    sns.scatterplot(ax=axes[0, 1], data=yi_val_kdd, x="ensemble", y="inference", color='green')
     axes[0, 1].set_title("val")
-    sns.scatterplot(ax=axes[0, 2], data=yi_test_kdd, x="ensemble", y="prediction", color='red')
+    sns.scatterplot(ax=axes[0, 2], data=yi_test_kdd, x="ensemble", y="inference", color='red')
     axes[0, 2].set_title("test")
     #nsl
-    sns.scatterplot(ax=axes[1, 0], data=yi_train_nsl, x="ensemble", y="prediction", color='blue')
-    sns.scatterplot(ax=axes[1, 1], data=yi_val_nsl, x="ensemble", y="prediction", color='green')
-    sns.scatterplot(ax=axes[1, 2], data=yi_test_nsl, x="ensemble", y="prediction", color='red')
+    sns.scatterplot(ax=axes[1, 0], data=yi_train_nsl, x="ensemble", y="inference", color='blue')
+    sns.scatterplot(ax=axes[1, 1], data=yi_val_nsl, x="ensemble", y="inference", color='green')
+    sns.scatterplot(ax=axes[1, 2], data=yi_test_nsl, x="ensemble", y="inference", color='red')
     #ids
-    sns.scatterplot(ax=axes[2, 0], data=yi_train_ids, x="ensemble", y="prediction", color='blue')
-    sns.scatterplot(ax=axes[2, 1], data=yi_val_ids, x="ensemble", y="prediction", color='green')
-    sns.scatterplot(ax=axes[2, 2], data=yi_test_ids, x="ensemble", y="prediction", color='red')
+    sns.scatterplot(ax=axes[2, 0], data=yi_train_ids, x="ensemble", y="inference", color='blue')
+    sns.scatterplot(ax=axes[2, 1], data=yi_val_ids, x="ensemble", y="inference", color='green')
+    sns.scatterplot(ax=axes[2, 2], data=yi_test_ids, x="ensemble", y="inference", color='red')
     #kitsune
-    sns.scatterplot(ax=axes[3, 0], data=yi_train_kitsune, x="ensemble", y="prediction", color='blue')
-    sns.scatterplot(ax=axes[3, 1], data=yi_val_kitsune, x="ensemble", y="prediction", color='green')
-    sns.scatterplot(ax=axes[3, 2], data=yi_test_kitsune, x="ensemble", y="prediction", color='red')
+    sns.scatterplot(ax=axes[3, 0], data=yi_train_kitsune, x="ensemble", y="inference", color='blue')
+    sns.scatterplot(ax=axes[3, 1], data=yi_val_kitsune, x="ensemble", y="inference", color='green')
+    sns.scatterplot(ax=axes[3, 2], data=yi_test_kitsune, x="ensemble", y="inference", color='red')
     #ciciot
-    sns.scatterplot(ax=axes[4, 0], data=yi_train_ciciot, x="ensemble", y="prediction", color='blue')
-    sns.scatterplot(ax=axes[4, 1], data=yi_val_ciciot, x="ensemble", y="prediction", color='green')
-    sns.scatterplot(ax=axes[4, 2], data=yi_test_ciciot, x="ensemble", y="prediction", color='red')
+    sns.scatterplot(ax=axes[4, 0], data=yi_train_ciciot, x="ensemble", y="inference", color='blue')
+    sns.scatterplot(ax=axes[4, 1], data=yi_val_ciciot, x="ensemble", y="inference", color='green')
+    sns.scatterplot(ax=axes[4, 2], data=yi_test_ciciot, x="ensemble", y="inference", color='red')
     plt.savefig(filename+".png", dpi=300)  
     
     
@@ -231,25 +231,25 @@ def get_lines(i, metric, filename):
     y_test_ciciot = XY_ciciot_test[:, metrics[metric]]
     X_test_ciciot = XY_ciciot_test[:, :-2]
     
-    yi_train_kdd = pd.DataFrame(data={'ensemble': y_train_kdd, 'prediction': y_pred_train_kdd})
-    yi_val_kdd = pd.DataFrame(data={'ensemble': y_val_kdd, 'prediction': y_pred_val_kdd})
-    yi_test_kdd = pd.DataFrame(data={'ensemble': y_test_kdd, 'prediction': y_pred_test_kdd})
+    yi_train_kdd = pd.DataFrame(data={'ensemble': y_train_kdd, 'inference': y_pred_train_kdd})
+    yi_val_kdd = pd.DataFrame(data={'ensemble': y_val_kdd, 'inference': y_pred_val_kdd})
+    yi_test_kdd = pd.DataFrame(data={'ensemble': y_test_kdd, 'inference': y_pred_test_kdd})
     
-    yi_train_nsl = pd.DataFrame(data={'ensemble': y_train_nsl, 'prediction': y_pred_train_nsl})
-    yi_val_nsl = pd.DataFrame(data={'ensemble': y_val_nsl, 'prediction': y_pred_val_nsl})
-    yi_test_nsl = pd.DataFrame(data={'ensemble': y_test_nsl, 'prediction': y_pred_test_nsl})
+    yi_train_nsl = pd.DataFrame(data={'ensemble': y_train_nsl, 'inference': y_pred_train_nsl})
+    yi_val_nsl = pd.DataFrame(data={'ensemble': y_val_nsl, 'inference': y_pred_val_nsl})
+    yi_test_nsl = pd.DataFrame(data={'ensemble': y_test_nsl, 'inference': y_pred_test_nsl})
     
-    yi_train_ids = pd.DataFrame(data={'ensemble': y_train_ids, 'prediction': y_pred_train_ids})
-    yi_val_ids = pd.DataFrame(data={'ensemble': y_val_ids, 'prediction': y_pred_val_ids})
-    yi_test_ids = pd.DataFrame(data={'ensemble': y_test_ids, 'prediction': y_pred_test_ids})
+    yi_train_ids = pd.DataFrame(data={'ensemble': y_train_ids, 'inference': y_pred_train_ids})
+    yi_val_ids = pd.DataFrame(data={'ensemble': y_val_ids, 'inference': y_pred_val_ids})
+    yi_test_ids = pd.DataFrame(data={'ensemble': y_test_ids, 'inference': y_pred_test_ids})
     
-    yi_train_kitsune = pd.DataFrame(data={'ensemble': y_train_kitsune, 'prediction': y_pred_train_kitsune})
-    yi_val_kitsune = pd.DataFrame(data={'ensemble': y_val_kitsune, 'prediction': y_pred_val_kitsune})
-    yi_test_kitsune = pd.DataFrame(data={'ensemble': y_test_kitsune, 'prediction': y_pred_test_kitsune})
+    yi_train_kitsune = pd.DataFrame(data={'ensemble': y_train_kitsune, 'inference': y_pred_train_kitsune})
+    yi_val_kitsune = pd.DataFrame(data={'ensemble': y_val_kitsune, 'inference': y_pred_val_kitsune})
+    yi_test_kitsune = pd.DataFrame(data={'ensemble': y_test_kitsune, 'inference': y_pred_test_kitsune})
     
-    yi_train_ciciot = pd.DataFrame(data={'ensemble': y_train_ciciot, 'prediction': y_pred_train_ciciot})
-    yi_val_ciciot = pd.DataFrame(data={'ensemble': y_val_ciciot, 'prediction': y_pred_val_ciciot})
-    yi_test_ciciot = pd.DataFrame(data={'ensemble': y_test_ciciot, 'prediction': y_pred_test_ciciot})
+    yi_train_ciciot = pd.DataFrame(data={'ensemble': y_train_ciciot, 'inference': y_pred_train_ciciot})
+    yi_val_ciciot = pd.DataFrame(data={'ensemble': y_val_ciciot, 'inference': y_pred_val_ciciot})
+    yi_test_ciciot = pd.DataFrame(data={'ensemble': y_test_ciciot, 'inference': y_pred_test_ciciot})
     
     # plots
     y_kdd = np.concatenate((y_train_kdd, y_val_kdd, y_test_kdd), axis=0)
@@ -265,11 +265,11 @@ def get_lines(i, metric, filename):
     y_pred_ciciot = np.concatenate((y_pred_train_ciciot, y_pred_val_ciciot, y_pred_test_ciciot), axis=0)
     
     
-    yi_kdd = pd.DataFrame(data={'ensemble': y_kdd, 'prediction': y_pred_kdd})
-    yi_nsl = pd.DataFrame(data={'ensemble': y_nsl, 'prediction': y_pred_nsl})
-    yi_ids = pd.DataFrame(data={'ensemble': y_ids, 'prediction': y_pred_ids})
-    yi_kitsune = pd.DataFrame(data={'ensemble': y_kitsune, 'prediction': y_pred_kitsune})
-    yi_ciciot = pd.DataFrame(data={'ensemble': y_ciciot, 'prediction': y_pred_ciciot})
+    yi_kdd = pd.DataFrame(data={'ensemble': y_kdd, 'inference': y_pred_kdd})
+    yi_nsl = pd.DataFrame(data={'ensemble': y_nsl, 'inference': y_pred_nsl})
+    yi_ids = pd.DataFrame(data={'ensemble': y_ids, 'inference': y_pred_ids})
+    yi_kitsune = pd.DataFrame(data={'ensemble': y_kitsune, 'inference': y_pred_kitsune})
+    yi_ciciot = pd.DataFrame(data={'ensemble': y_ciciot, 'inference': y_pred_ciciot})
     # lines
     fig, axes = plt.subplots(5, 1, figsize=(9, 9), sharey=False)
     n = 200
@@ -278,21 +278,22 @@ def get_lines(i, metric, filename):
     yi_ids = yi_ids.sample(n = n)
     yi_kitsune = yi_kitsune.sample(n = n)
     yi_ciciot = yi_ciciot.sample(n = n)
-    sns.lineplot(ax=axes[0], x=yi_kdd.index, y='ensemble', data=yi_kdd, color='blue')
-    sns.lineplot(ax=axes[0], x=yi_kdd.index, y='prediction', data=yi_kdd, color='red')
-    sns.lineplot(ax=axes[1], x=yi_nsl.index, y='ensemble', data=yi_nsl, color='blue')
-    sns.lineplot(ax=axes[1], x=yi_nsl.index, y='prediction', data=yi_nsl, color='red')
-    sns.lineplot(ax=axes[2], x=yi_ids.index, y='ensemble', data=yi_ids, color='blue')
-    sns.lineplot(ax=axes[2], x=yi_ids.index, y='prediction', data=yi_ids, color='red')
-    sns.lineplot(ax=axes[3], x=yi_kitsune.index, y='ensemble', data=yi_kitsune, color='blue')
-    sns.lineplot(ax=axes[3], x=yi_kitsune.index, y='prediction', data=yi_kitsune, color='red')
-    sns.lineplot(ax=axes[4], x=yi_ciciot.index, y='ensemble', data=yi_ciciot, color='blue')
-    sns.lineplot(ax=axes[4], x=yi_ciciot.index, y='prediction', data=yi_ciciot, color='red')
+    sns.scatterplot(ax=axes[0], x=yi_kdd.index, y='ensemble', data=yi_kdd, color='blue')
+    sns.lineplot(ax=axes[0], x=yi_kdd.index, y='inference', data=yi_kdd, color='red')
+    sns.scatterplot(ax=axes[1], x=yi_nsl.index, y='ensemble', data=yi_nsl, color='blue')
+    sns.lineplot(ax=axes[1], x=yi_nsl.index, y='inference', data=yi_nsl, color='red')
+    sns.scatterplot(ax=axes[2], x=yi_ids.index, y='ensemble', data=yi_ids, color='blue')
+    sns.lineplot(ax=axes[2], x=yi_ids.index, y='inference', data=yi_ids, color='red')
+    sns.scatterplot(ax=axes[3], x=yi_kitsune.index, y='ensemble', data=yi_kitsune, color='blue')
+    sns.lineplot(ax=axes[3], x=yi_kitsune.index, y='inference', data=yi_kitsune, color='red')
+    sns.scatterplot(ax=axes[4], x=yi_ciciot.index, y='ensemble', data=yi_ciciot, color='blue')
+    sns.lineplot(ax=axes[4], x=yi_ciciot.index, y='inference', data=yi_ciciot, color='red')
     axes[0].set(xlabel=None, ylabel=None)
     axes[1].set(xlabel=None, ylabel=None)
     axes[2].set(xlabel=None, ylabel=None)
     axes[3].set(xlabel=None, ylabel=None)
     axes[4].set(xlabel=None, ylabel=None)
+    axes[0].legend(labels=["ensemble","inference"])
     plt.savefig(filename+"_lines.png", dpi=300)  
     
     
