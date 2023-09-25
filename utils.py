@@ -1,6 +1,7 @@
 from models.ae import AE
 from models.mlp import MLP
-from models.utils import ae_train, mlp_train
+from models.forest import FOREST
+from models.utils import ae_train, mlp_train, forest_train
 import torch
 import torch.nn as nn
 import numpy as np
@@ -11,7 +12,9 @@ from scipy.stats import entropy
 directory_model = "checkpoints/"
 directory_data = "data/"
 directory_output = "outputs/"
+directory_output_ext = "outputs_ext/"
 model_reg_name = "mlp_regressor"
+forest_reg_name = "forest_regressor"
 kdd = "kdd"
 nsl = "nsl"
 ids = "ids"
@@ -62,6 +65,10 @@ def get_latent_repr(model, criterion, X):
 
 def save_uncertainty(model, config, X, label="train"):
     preds = [model(x_in.to(device)).detach().numpy() for x_in in X]
+    np.savetxt(directory_output_ext + config + "_pred_" + label + ".csv", preds)
+    
+def save_forest_uncertainty(model, config, X, label="train"):
+    preds = [model.regressor.predict(x_in) for x_in in X]
     np.savetxt(directory_output + config + "_pred_" + label + ".csv", preds)
  
 
@@ -245,34 +252,40 @@ def build_latent_representation():
                 np.savetxt(directory_data + config + "_" + configs + "_latent_" + str(selected_model_id) +".csv", latent_rep, delimiter=',')
             print("--building "+config+" data set done")
         print("building latent representation on "+configs+" done")
+        
+def get_train_data_configs(selected_model_id):
+    XY_kdd_train = np.loadtxt(directory_data + kdd + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
+    XY_kdd_val = np.loadtxt(directory_data + kdd + "_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
+
+    
+    XY_nsl_train = np.loadtxt(directory_data + nsl + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
+    XY_nsl_val = np.loadtxt(directory_data + nsl + "_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
+    
+    XY_ids_train = np.loadtxt(directory_data + ids + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
+    XY_ids_val = np.loadtxt(directory_data + ids +"_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
+    
+    XY_kitsune_train = np.loadtxt(directory_data + kitsune + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
+    XY_kitsune_val = np.loadtxt(directory_data + kitsune +"_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
+    
+    XY_ciciot_train = np.loadtxt(directory_data + ciciot + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
+    XY_ciciot_val = np.loadtxt(directory_data + ciciot +"_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
+
+    
+    configs = {kdd: [XY_kdd_train, XY_kdd_val],
+              nsl: [XY_nsl_train, XY_nsl_val],
+              ids: [XY_ids_train, XY_ids_val],
+              kitsune: [XY_kitsune_train, XY_kitsune_val],
+              ciciot: [XY_ciciot_train, XY_ciciot_val]}
+    return configs
+    
+    
             
 def train_mlp(batch_size = 32, lr = 1e-5, w_d = 1e-5, momentum = 0.9, epochs = 5):
     
     for selected_model_id in candidates:
         print("regression training on candidate "+str(selected_model_id) + " starts...")
-        XY_kdd_train = np.loadtxt(directory_data + kdd + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
-        XY_kdd_val = np.loadtxt(directory_data + kdd + "_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
-    
         
-        XY_nsl_train = np.loadtxt(directory_data + nsl + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
-        XY_nsl_val = np.loadtxt(directory_data + nsl + "_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
-        
-        XY_ids_train = np.loadtxt(directory_data + ids + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
-        XY_ids_val = np.loadtxt(directory_data + ids +"_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
-        
-        XY_kitsune_train = np.loadtxt(directory_data + kitsune + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
-        XY_kitsune_val = np.loadtxt(directory_data + kitsune +"_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
-        
-        XY_ciciot_train = np.loadtxt(directory_data + ciciot + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
-        XY_ciciot_val = np.loadtxt(directory_data + ciciot +"_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
-    
-        
-        configs = {kdd: [XY_kdd_train, XY_kdd_val],
-                  nsl: [XY_nsl_train, XY_nsl_val],
-                  ids: [XY_ids_train, XY_ids_val],
-                  kitsune: [XY_kitsune_train, XY_kitsune_val],
-                  ciciot: [XY_ciciot_train, XY_ciciot_val]}
-        
+        configs = get_train_data_configs(selected_model_id)
         
         for metric in metrics:
             print("--training for metric "+ metric + " starts...")
@@ -286,42 +299,68 @@ def train_mlp(batch_size = 32, lr = 1e-5, w_d = 1e-5, momentum = 0.9, epochs = 5
                 X_train = X_train.astype('float32')
                 X_train = torch.from_numpy(X_train)
                 X_val = torch.from_numpy(X_val)
-                mlp_model = MLP(X_train.shape[1], model_reg_name + "_" + metric + "_" + str(selected_model_id))
+                mlp_model = MLP(X_train.shape[1], model_reg_name + "_"+ config + "_" + metric + "_" + str(selected_model_id))
                 mlp_train(mlp_model, X_train, y_train, X_val, y_val, l_r = lr, w_d = w_d, n_epochs = epochs, batch_size = batch_size)
                 mlp_model.save()
                 print("----training on "+config+" data set done")
             print("--training for metric "+ metric + " done")
         print("regression training on candidate "+str(selected_model_id) + " done")
-            
+
+def train_forest(max_depth=4):
+    
+    for selected_model_id in candidates:
+        print("regression training on candidate "+str(selected_model_id) + " starts...")
+        configs = get_train_data_configs(selected_model_id)
+        
+        
+        for metric in metrics:
+            print("--training for metric "+ metric + " starts...")
+            for config in configs:
+                print("----training on "+config+" data set starts...")
+                XY_train, XY_val = configs[config]
+                X_train, y_train = XY_train[:, :-2], XY_train[:, metrics[metric]]
+                X_train = X_train.astype('float32')
+                X_train = torch.from_numpy(X_train)
+                forest_model = FOREST(max_depth, forest_reg_name + "_" + config + "_" + metric + "_" + str(selected_model_id))
+                forest_train(forest_model, X_train, y_train, max_depth)
+                forest_model.save()
+                print("----training on "+config+" data set done")
+            print("--training for metric "+ metric + " done")
+        print("regression training on candidate "+str(selected_model_id) + " done")
+
+def get_test_data_configs(selected_model_id):
+    XY_kdd_train = np.loadtxt(directory_data + kdd + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
+    XY_kdd_val = np.loadtxt(directory_data + kdd + "_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
+    XY_kdd_test = np.loadtxt(directory_data + kdd +"_test_latent_" + str(selected_model_id) +".csv", delimiter=',')
+        
+    XY_nsl_train = np.loadtxt(directory_data + nsl + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
+    XY_nsl_val = np.loadtxt(directory_data + nsl + "_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
+    XY_nsl_test = np.loadtxt(directory_data + nsl + "_test_latent_" + str(selected_model_id) +".csv", delimiter=',')
+        
+    XY_ids_train = np.loadtxt(directory_data + ids + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
+    XY_ids_val = np.loadtxt(directory_data + ids + "_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
+    XY_ids_test = np.loadtxt(directory_data + ids + "_test_latent_" + str(selected_model_id) +".csv", delimiter=',')
+        
+    XY_kitsune_train = np.loadtxt(directory_data + kitsune + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
+    XY_kitsune_val = np.loadtxt(directory_data + kitsune + "_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
+    XY_kitsune_test = np.loadtxt(directory_data + kitsune + "_test_latent_" + str(selected_model_id) +".csv", delimiter=',')
+        
+    XY_ciciot_train = np.loadtxt(directory_data + ciciot + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
+    XY_ciciot_val = np.loadtxt(directory_data + ciciot + "_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
+    XY_ciciot_test = np.loadtxt(directory_data + ciciot + "_test_latent_" + str(selected_model_id) +".csv", delimiter=',')
+        
+    configs = {kdd: [XY_kdd_train, XY_kdd_val, XY_kdd_test],
+                  nsl: [XY_nsl_train, XY_nsl_val, XY_nsl_test],
+                  ids: [XY_ids_train, XY_ids_val, XY_ids_test],
+                  kitsune: [XY_kitsune_train, XY_kitsune_val, XY_kitsune_test],
+                  ciciot: [XY_ciciot_train, XY_ciciot_val, XY_ciciot_test]} 
+    return configs  
+      
 def evaluate_mlp():
     
     for selected_model_id in candidates:
         print("evaluating on candidate "+str(selected_model_id) + " starts...")
-        XY_kdd_train = np.loadtxt(directory_data + kdd + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
-        XY_kdd_val = np.loadtxt(directory_data + kdd + "_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
-        XY_kdd_test = np.loadtxt(directory_data + kdd +"_test_latent_" + str(selected_model_id) +".csv", delimiter=',')
-        
-        XY_nsl_train = np.loadtxt(directory_data + nsl + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
-        XY_nsl_val = np.loadtxt(directory_data + nsl + "_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
-        XY_nsl_test = np.loadtxt(directory_data + nsl + "_test_latent_" + str(selected_model_id) +".csv", delimiter=',')
-        
-        XY_ids_train = np.loadtxt(directory_data + ids + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
-        XY_ids_val = np.loadtxt(directory_data + ids + "_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
-        XY_ids_test = np.loadtxt(directory_data + ids + "_test_latent_" + str(selected_model_id) +".csv", delimiter=',')
-        
-        XY_kitsune_train = np.loadtxt(directory_data + kitsune + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
-        XY_kitsune_val = np.loadtxt(directory_data + kitsune + "_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
-        XY_kitsune_test = np.loadtxt(directory_data + kitsune + "_test_latent_" + str(selected_model_id) +".csv", delimiter=',')
-        
-        XY_ciciot_train = np.loadtxt(directory_data + ciciot + "_train_latent_" + str(selected_model_id) +".csv", delimiter=',')
-        XY_ciciot_val = np.loadtxt(directory_data + ciciot + "_val_latent_" + str(selected_model_id) +".csv", delimiter=',')
-        XY_ciciot_test = np.loadtxt(directory_data + ciciot + "_test_latent_" + str(selected_model_id) +".csv", delimiter=',')
-        
-        configs = {kdd: [XY_kdd_train, XY_kdd_val, XY_kdd_test],
-                  nsl: [XY_nsl_train, XY_nsl_val, XY_nsl_test],
-                  ids: [XY_ids_train, XY_ids_val, XY_ids_test],
-                  kitsune: [XY_kitsune_train, XY_kitsune_val, XY_kitsune_test],
-                  ciciot: [XY_ciciot_train, XY_ciciot_val, XY_ciciot_test]}
+        configs = get_test_data_configs(selected_model_id)
         
         for metric in metrics:
             print("--evaluating for metric "+ metric + " starts...")
@@ -338,13 +377,45 @@ def evaluate_mlp():
                 X_val = torch.from_numpy(X_val)
                 X_test = torch.from_numpy(X_test)
                
-                mlp_model = MLP(X_train.shape[1], model_reg_name + "_" + metric + "_" + str(selected_model_id))
+                mlp_model = MLP(X_train.shape[1], model_reg_name + "_" + config +  "_" + metric + "_" + str(selected_model_id))
                 mlp_model.load()
                 mlp_model.to(device)
                 
                 save_uncertainty(mlp_model, config, X_train, label="train_" + metric + "_" + str(selected_model_id))
                 save_uncertainty(mlp_model, config, X_val, label="val_" + metric + "_" + str(selected_model_id))
                 save_uncertainty(mlp_model, config, X_test, label="test_" + metric + "_" + str(selected_model_id))
+        
+                print("----evaluating  on "+config+" data set done ")
+            print("--evaluating for metric "+ metric + " done")
+        print("evaluating on candidate "+str(selected_model_id) + " done")
+        
+def evaluate_forest(max_depth = 4):
+    
+    for selected_model_id in candidates:
+        print("evaluating on candidate "+str(selected_model_id) + " starts...")
+        configs = get_test_data_configs(selected_model_id)
+        
+        for metric in metrics:
+            print("--evaluating for metric "+ metric + " starts...")
+            for config in configs:
+                print("----evaluating  on "+config+" data set starts... ")
+                XY_train, XY_val, XY_test = configs[config]
+                X_train = XY_train[:, :-2]
+                X_val = XY_val[:, :-2]
+                X_test = XY_test[:, :-2]
+                X_train = X_train.astype('float32')
+                X_val = X_val.astype('float32')
+                X_test = X_test.astype('float32')
+                X_train = torch.from_numpy(X_train)
+                X_val = torch.from_numpy(X_val)
+                X_test = torch.from_numpy(X_test)
+               
+                forest_model = FOREST(max_depth, forest_reg_name + "_" + config +  "_" + metric + "_" + str(selected_model_id))
+                forest_model.load()
+                
+                save_forest_uncertainty(forest_model, config, X_train, label="train_" + metric + "_" + str(selected_model_id))
+                save_forest_uncertainty(forest_model, config, X_val, label="val_" + metric + "_" + str(selected_model_id))
+                save_forest_uncertainty(forest_model, config, X_test, label="test_" + metric + "_" + str(selected_model_id))
         
                 print("----evaluating  on "+config+" data set done ")
             print("--evaluating for metric "+ metric + " done")

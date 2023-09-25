@@ -1,4 +1,5 @@
 from utils import train_ae, train_mlp, build_latent_representation, evaluate_mlp
+from utils import train_forest, evaluate_forest
 from pathlib import Path
 import argparse
 from data_processing import process_raw_data, split_and_save_data
@@ -7,12 +8,14 @@ from data_processing import process_raw_data, split_and_save_data
 directory_model = "checkpoints/"
 directory_data = "data/"
 directory_output = "outputs/"
+directory_output_ext = "outputs_ext/"
 
 
 def init():
     Path(directory_model).mkdir(parents=True, exist_ok=True)
     Path(directory_data).mkdir(parents=True, exist_ok=True)
     Path(directory_output).mkdir(parents=True, exist_ok=True)
+    Path(directory_output_ext).mkdir(parents=True, exist_ok=True)
 
 def run_ae(batch_size, lr, w_d, momentum, epochs, is_train, to_process_data):
     
@@ -34,10 +37,19 @@ def run_mlp(batch_size, lr, w_d, momentum, epochs, is_train_mlp):
     
     evaluate_mlp()
 
+def run_forest(max_depth, is_train_mlp):
+    
+        
+    if is_train_mlp:
+        train_forest(max_depth)
+    
+    evaluate_forest()
+
 if __name__ == "__main__":
    parser = argparse.ArgumentParser(description="CUQ-AE-REDM Framework for uncertainty quantification on AEs-based methods for anomaly detection",
                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
    parser.add_argument("-s", "--reg_stage", action="store_true", help="regression_stage", default=False)
+   parser.add_argument("-f", "--random_forest_model", action="store_true", help="random_forest_regression_stage", default=False)
    parser.add_argument("-t", "--is_train", action="store_true", help="training mode", default=False)
    parser.add_argument("-r", "--is_train_mlp", action="store_true", help="mlp_training mode", default=False)
    parser.add_argument("-p", "--to_process_data", action="store_true", help="process data", default=False)
@@ -52,6 +64,7 @@ if __name__ == "__main__":
    reg_stage = configs['reg_stage']
    is_train = configs['is_train']
    is_train_mlp = configs['is_train_mlp']
+   is_forest = configs['random_forest_model']
    to_process_data = configs['to_process_data']
    batch_size = configs['batch_size']
    lr = configs['learning_rate']
@@ -61,5 +74,10 @@ if __name__ == "__main__":
    
    if not reg_stage:
        run_ae(batch_size, lr, w_d, momentum, epochs, is_train, to_process_data)
-   else:   
-       run_mlp(batch_size, lr, w_d, momentum, epochs, is_train_mlp)
+   else:  
+       
+       if not is_forest:
+           run_mlp(batch_size, lr, w_d, momentum, epochs, is_train_mlp) 
+       else:
+           run_forest(4, is_train_mlp)
+    

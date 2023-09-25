@@ -105,7 +105,7 @@ def get_plots(i, metric, filename):
     yi_val_kitsune = pd.DataFrame(data={'ensemble': y_val_kitsune, 'inference': y_pred_val_kitsune})
     yi_test_kitsune = pd.DataFrame(data={'ensemble': y_test_kitsune, 'inference': y_pred_test_kitsune})
     
-    yi_train_ciciot = pd.DataFrame(data={'ensemble': y_train_ciciot, 'prediction': y_pred_train_ciciot})
+    yi_train_ciciot = pd.DataFrame(data={'ensemble': y_train_ciciot, 'inference': y_pred_train_ciciot})
     yi_val_ciciot = pd.DataFrame(data={'ensemble': y_val_ciciot, 'inference': y_pred_val_ciciot})
     yi_test_ciciot = pd.DataFrame(data={'ensemble': y_test_ciciot, 'inference': y_pred_test_ciciot})
     
@@ -272,6 +272,7 @@ def get_lines(i, metric, filename):
     yi_ciciot = pd.DataFrame(data={'ensemble': y_ciciot, 'inference': y_pred_ciciot})
     # lines
     fig, axes = plt.subplots(5, 1, figsize=(9, 9), sharey=False)
+    fig.subplots_adjust(hspace=0.5)
     n = 200
     yi_kdd = yi_kdd.sample(n = n)
     yi_nsl = yi_nsl.sample(n = n)
@@ -288,11 +289,17 @@ def get_lines(i, metric, filename):
     sns.lineplot(ax=axes[3], x=yi_kitsune.index, y='inference', data=yi_kitsune, color='red')
     sns.scatterplot(ax=axes[4], x=yi_ciciot.index, y='ensemble', data=yi_ciciot, color='blue')
     sns.lineplot(ax=axes[4], x=yi_ciciot.index, y='inference', data=yi_ciciot, color='red')
-    axes[0].set(xlabel=None, ylabel=None)
+    axes[0].set(xlabel= None, ylabel=None)
+    axes[0].set_title("KDD")
     axes[1].set(xlabel=None, ylabel=None)
+    axes[1].set_title("NSL")
     axes[2].set(xlabel=None, ylabel=None)
+    axes[2].set_title("IDS")
     axes[3].set(xlabel=None, ylabel=None)
+    axes[3].set_title("KITSUNE")
     axes[4].set(xlabel=None, ylabel=None)
+    axes[4].set_title("CICIOT")
+    
     axes[0].legend(labels=["ensemble","inference"])
     plt.savefig(filename+"_lines.png", dpi=300)  
     
@@ -393,11 +400,11 @@ def get_data_description(size, metric, filename):
         axes[i, 3].set(xlabel=None, ylabel=None)
         axes[i, 4].set(xlabel=None, ylabel=None)
         if i==0:
-            axes[i, 0].set_title("kdd")
-            axes[i, 1].set_title("nsl")
-            axes[i, 2].set_title("ids")
-            axes[i, 3].set_title("kitsune")
-            axes[i, 4].set_title("ciciot")
+            axes[i, 0].set_title("KDD")
+            axes[i, 1].set_title("NSL")
+            axes[i, 2].set_title("IDS")
+            axes[i, 3].set_title("KITSUNE")
+            axes[i, 4].set_title("CICIOT")
         print("preping plot for candidate "+str(i)+" done")
     
     plt.savefig(filename+"_description_" + metric + ".png", dpi=300)  
