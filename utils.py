@@ -68,7 +68,7 @@ def save_uncertainty(model, config, X, label="train"):
     np.savetxt(directory_output_ext + config + "_pred_" + label + ".csv", preds)
     
 def save_forest_uncertainty(model, config, X, label="train"):
-    preds = [model.regressor.predict(x_in) for x_in in X]
+    preds = model.regressor.predict(X)
     np.savetxt(directory_output + config + "_pred_" + label + ".csv", preds)
  
 

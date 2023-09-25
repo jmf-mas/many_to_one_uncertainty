@@ -16,7 +16,12 @@ kitsune = "kitsune"
 ciciot = "ciciot"
 metrics = {"ent":-1, "std":-2}
 
-def get_plots(i, metric, filename):
+def get_plots(i, metric, filename, model = "mlp"):
+    if model!="mlp":
+       directory_outputs = "outputs_ext/"
+    else:
+       directory_outputs = "outputs/"
+        
     
     y_pred_train_ids = np.loadtxt(directory_outputs + ids + "_pred_train_"+metric+"_"+str(i)+".csv", delimiter=",")
     y_pred_val_ids = np.loadtxt(directory_outputs + ids + "_pred_val_"+metric+"_"+str(i)+".csv", delimiter=",")
@@ -158,7 +163,13 @@ def get_plots(i, metric, filename):
     print("scc kitsune", scc(y_train_kitsune, y_pred_train_kitsune)[0], scc(y_val_kitsune, y_pred_val_kitsune)[0], scc(y_test_kitsune, y_pred_test_kitsune)[0])
     print("scc ciciot", scc(y_train_ciciot, y_pred_train_ciciot)[0], scc(y_val_ciciot, y_pred_val_ciciot)[0], scc(y_test_ciciot, y_pred_test_ciciot)[0])
 
-def get_lines(i, metric, filename):
+def get_lines(i, metric, filename, model="mlp"):
+    
+    if model!="mlp":
+       directory_outputs = "outputs_ext/"
+    else:
+       directory_outputs = "outputs/"
+        
     
     y_pred_train_ids = np.loadtxt(directory_outputs + ids + "_pred_train_"+metric+"_"+str(i)+".csv", delimiter=",")
     y_pred_val_ids = np.loadtxt(directory_outputs + ids + "_pred_val_"+metric+"_"+str(i)+".csv", delimiter=",")

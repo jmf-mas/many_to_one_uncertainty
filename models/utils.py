@@ -110,8 +110,14 @@ def mlp_train(model, X_train, y_train, X_val, y_val, l_r = 1e-2, w_d = 1e-5, n_e
     model.load_state_dict(best_weights)
     print("MSE: %.5f" % best_mse)
     print("RMSE: %.5f" % np.sqrt(best_mse))
-    plt.plot(history)
-    plt.show()
+    #plt.plot(history)
+    #plt.show()
+
+def forest_train(model, X_train, y_train, max_depth = 3, save_errors = True):
+    # training parameters
+
+    model.regressor.fit(X_train, y_train)
+     
             
 def model_eval(model, x):
     loss_fn = nn.MSELoss()
@@ -150,6 +156,7 @@ def compute_metrics(val_score, y_val, thresh, pos_label=1):
 
 def estimate_optimal_threshold(val_score, y_val, pos_label=1, nq=100):
     ratio = 100 * sum(y_val == 0) / len(y_val)
+    print("ratio", ratio)
     print(f"Ratio of normal data:{ratio}")
     q = np.linspace(ratio - 5, min(ratio + 5, 100), nq)
     thresholds = np.percentile(val_score, q)
