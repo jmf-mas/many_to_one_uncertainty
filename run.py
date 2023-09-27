@@ -9,6 +9,7 @@ directory_model = "checkpoints/"
 directory_data = "data/"
 directory_output = "outputs/"
 directory_output_ext = "outputs_ext/"
+directory_plots = "plots/"
 
 
 def init():
@@ -16,6 +17,7 @@ def init():
     Path(directory_data).mkdir(parents=True, exist_ok=True)
     Path(directory_output).mkdir(parents=True, exist_ok=True)
     Path(directory_output_ext).mkdir(parents=True, exist_ok=True)
+    Path(directory_plots).mkdir(parents=True, exist_ok=True)
 
 def run_ae(batch_size, lr, w_d, momentum, epochs, is_train, to_process_data):
     

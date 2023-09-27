@@ -15,6 +15,8 @@ ids = "ids"
 kitsune = "kitsune"
 ciciot = "ciciot"
 metrics = {"ent":-1, "std":-2}
+directory_plots = "plots/"
+models = {"mlp":1, "rf":2}
 
 def get_plots(i, metric, filename, model = "mlp"):
     if model!="mlp":
@@ -46,53 +48,38 @@ def get_plots(i, metric, filename, model = "mlp"):
     
     XY_kdd_train = np.loadtxt(directory_data + kdd + "_train_latent_" + str(i) +".csv", delimiter=',')
     y_train_kdd = XY_kdd_train[:, metrics[metric]]
-    X_train_kdd = XY_kdd_train[:, :-2]
     XY_kdd_val = np.loadtxt(directory_data + kdd + "_val_latent_" + str(i) +".csv", delimiter=',')
     y_val_kdd = XY_kdd_val[:, metrics[metric]]
-    X_val_kdd = XY_kdd_val[:, :-2]
     XY_kdd_test = np.loadtxt(directory_data + kdd +"_test_latent_" + str(i) +".csv", delimiter=',')
     y_test_kdd = XY_kdd_test[:, metrics[metric]]
-    X_test_kdd = XY_kdd_test[:, :-2]
         
     XY_nsl_train = np.loadtxt(directory_data + nsl + "_train_latent_" + str(i) +".csv", delimiter=',')
     y_train_nsl = XY_nsl_train[:, metrics[metric]]
-    X_train_nsl = XY_nsl_train[:, :-2]
     XY_nsl_val = np.loadtxt(directory_data + nsl + "_val_latent_" + str(i) +".csv", delimiter=',')
     y_val_nsl = XY_nsl_val[:, metrics[metric]]
-    X_val_nsl = XY_nsl_val[:, :-2]
     XY_nsl_test = np.loadtxt(directory_data + nsl + "_test_latent_" + str(i) +".csv", delimiter=',')
     y_test_nsl = XY_nsl_test[:, metrics[metric]]
-    X_test_nsl = XY_nsl_test[:, :-2]
         
     XY_ids_train = np.loadtxt(directory_data + ids + "_train_latent_" + str(i) +".csv", delimiter=',')
     y_train_ids = XY_ids_train[:, metrics[metric]]
-    X_train_ids = XY_ids_train[:, :-2]
     XY_ids_val = np.loadtxt(directory_data + ids + "_val_latent_" + str(i) +".csv", delimiter=',')
     y_val_ids = XY_ids_val[:, metrics[metric]]
-    X_val_ids = XY_ids_val[:, :-2]
     XY_ids_test = np.loadtxt(directory_data + ids + "_test_latent_" + str(i) +".csv", delimiter=',')
     y_test_ids = XY_ids_test[:, metrics[metric]]
-    X_test_ids = XY_ids_test[:, :-2]
     
     XY_kitsune_train = np.loadtxt(directory_data + kitsune + "_train_latent_" + str(i) +".csv", delimiter=',')
     y_train_kitsune = XY_kitsune_train[:, metrics[metric]]
-    X_train_kitsune = XY_kitsune_train[:, :-2]
     XY_kitsune_val = np.loadtxt(directory_data + kitsune + "_val_latent_" + str(i) +".csv", delimiter=',')
     y_val_kitsune = XY_kitsune_val[:, metrics[metric]]
-    X_val_kitsune = XY_kitsune_val[:, :-2]
     XY_kitsune_test = np.loadtxt(directory_data + kitsune + "_test_latent_" + str(i) +".csv", delimiter=',')
     y_test_kitsune = XY_kitsune_test[:, metrics[metric]]
-    X_test_kitsune = XY_kitsune_test[:, :-2]
     
     XY_ciciot_train = np.loadtxt(directory_data + ciciot + "_train_latent_" + str(i) +".csv", delimiter=',')
     y_train_ciciot = XY_ciciot_train[:, metrics[metric]]
-    X_train_ciciot = XY_ciciot_train[:, :-2]
     XY_ciciot_val = np.loadtxt(directory_data + ciciot + "_val_latent_" + str(i) +".csv", delimiter=',')
     y_val_ciciot = XY_ciciot_val[:, metrics[metric]]
-    X_val_ciciot = XY_ciciot_val[:, :-2]
     XY_ciciot_test = np.loadtxt(directory_data + ciciot + "_test_latent_" + str(i) +".csv", delimiter=',')
     y_test_ciciot = XY_ciciot_test[:, metrics[metric]]
-    X_test_ciciot = XY_ciciot_test[:, :-2]
     
     yi_train_kdd = pd.DataFrame(data={'ensemble': y_train_kdd, 'inference': y_pred_train_kdd})
     yi_val_kdd = pd.DataFrame(data={'ensemble': y_val_kdd, 'inference': y_pred_val_kdd})
@@ -146,7 +133,7 @@ def get_plots(i, metric, filename, model = "mlp"):
     sns.scatterplot(ax=axes[4, 0], data=yi_train_ciciot, x="ensemble", y="inference", color='blue')
     sns.scatterplot(ax=axes[4, 1], data=yi_val_ciciot, x="ensemble", y="inference", color='green')
     sns.scatterplot(ax=axes[4, 2], data=yi_test_ciciot, x="ensemble", y="inference", color='red')
-    plt.savefig(filename+".png", dpi=300)  
+    plt.savefig(directory_plots + filename + ".png", dpi=300)  
     
     
     # Pearson’s Correlation
@@ -194,73 +181,39 @@ def get_lines(i, metric, filename, model="mlp"):
     
     XY_kdd_train = np.loadtxt(directory_data + kdd + "_train_latent_" + str(i) +".csv", delimiter=',')
     y_train_kdd = XY_kdd_train[:, metrics[metric]]
-    X_train_kdd = XY_kdd_train[:, :-2]
     XY_kdd_val = np.loadtxt(directory_data + kdd + "_val_latent_" + str(i) +".csv", delimiter=',')
     y_val_kdd = XY_kdd_val[:, metrics[metric]]
-    X_val_kdd = XY_kdd_val[:, :-2]
     XY_kdd_test = np.loadtxt(directory_data + kdd +"_test_latent_" + str(i) +".csv", delimiter=',')
     y_test_kdd = XY_kdd_test[:, metrics[metric]]
-    X_test_kdd = XY_kdd_test[:, :-2]
         
     XY_nsl_train = np.loadtxt(directory_data + nsl + "_train_latent_" + str(i) +".csv", delimiter=',')
     y_train_nsl = XY_nsl_train[:, metrics[metric]]
-    X_train_nsl = XY_nsl_train[:, :-2]
     XY_nsl_val = np.loadtxt(directory_data + nsl + "_val_latent_" + str(i) +".csv", delimiter=',')
     y_val_nsl = XY_nsl_val[:, metrics[metric]]
-    X_val_nsl = XY_nsl_val[:, :-2]
     XY_nsl_test = np.loadtxt(directory_data + nsl + "_test_latent_" + str(i) +".csv", delimiter=',')
     y_test_nsl = XY_nsl_test[:, metrics[metric]]
-    X_test_nsl = XY_nsl_test[:, :-2]
         
     XY_ids_train = np.loadtxt(directory_data + ids + "_train_latent_" + str(i) +".csv", delimiter=',')
     y_train_ids = XY_ids_train[:, metrics[metric]]
-    X_train_ids = XY_ids_train[:, :-2]
     XY_ids_val = np.loadtxt(directory_data + ids + "_val_latent_" + str(i) +".csv", delimiter=',')
     y_val_ids = XY_ids_val[:, metrics[metric]]
-    X_val_ids = XY_ids_val[:, :-2]
     XY_ids_test = np.loadtxt(directory_data + ids + "_test_latent_" + str(i) +".csv", delimiter=',')
     y_test_ids = XY_ids_test[:, metrics[metric]]
-    X_test_ids = XY_ids_test[:, :-2]
     
     XY_kitsune_train = np.loadtxt(directory_data + kitsune + "_train_latent_" + str(i) +".csv", delimiter=',')
     y_train_kitsune = XY_kitsune_train[:, metrics[metric]]
-    X_train_kitsune = XY_kitsune_train[:, :-2]
     XY_kitsune_val = np.loadtxt(directory_data + kitsune + "_val_latent_" + str(i) +".csv", delimiter=',')
     y_val_kitsune = XY_kitsune_val[:, metrics[metric]]
-    X_val_kitsune = XY_kitsune_val[:, :-2]
     XY_kitsune_test = np.loadtxt(directory_data + kitsune + "_test_latent_" + str(i) +".csv", delimiter=',')
     y_test_kitsune = XY_kitsune_test[:, metrics[metric]]
-    X_test_kitsune = XY_kitsune_test[:, :-2]
     
     XY_ciciot_train = np.loadtxt(directory_data + ciciot + "_train_latent_" + str(i) +".csv", delimiter=',')
     y_train_ciciot = XY_ciciot_train[:, metrics[metric]]
-    X_train_ciciot = XY_ciciot_train[:, :-2]
     XY_ciciot_val = np.loadtxt(directory_data + ciciot + "_val_latent_" + str(i) +".csv", delimiter=',')
     y_val_ciciot = XY_ciciot_val[:, metrics[metric]]
-    X_val_ciciot = XY_ciciot_val[:, :-2]
     XY_ciciot_test = np.loadtxt(directory_data + ciciot + "_test_latent_" + str(i) +".csv", delimiter=',')
     y_test_ciciot = XY_ciciot_test[:, metrics[metric]]
-    X_test_ciciot = XY_ciciot_test[:, :-2]
     
-    yi_train_kdd = pd.DataFrame(data={'ensemble': y_train_kdd, 'inference': y_pred_train_kdd})
-    yi_val_kdd = pd.DataFrame(data={'ensemble': y_val_kdd, 'inference': y_pred_val_kdd})
-    yi_test_kdd = pd.DataFrame(data={'ensemble': y_test_kdd, 'inference': y_pred_test_kdd})
-    
-    yi_train_nsl = pd.DataFrame(data={'ensemble': y_train_nsl, 'inference': y_pred_train_nsl})
-    yi_val_nsl = pd.DataFrame(data={'ensemble': y_val_nsl, 'inference': y_pred_val_nsl})
-    yi_test_nsl = pd.DataFrame(data={'ensemble': y_test_nsl, 'inference': y_pred_test_nsl})
-    
-    yi_train_ids = pd.DataFrame(data={'ensemble': y_train_ids, 'inference': y_pred_train_ids})
-    yi_val_ids = pd.DataFrame(data={'ensemble': y_val_ids, 'inference': y_pred_val_ids})
-    yi_test_ids = pd.DataFrame(data={'ensemble': y_test_ids, 'inference': y_pred_test_ids})
-    
-    yi_train_kitsune = pd.DataFrame(data={'ensemble': y_train_kitsune, 'inference': y_pred_train_kitsune})
-    yi_val_kitsune = pd.DataFrame(data={'ensemble': y_val_kitsune, 'inference': y_pred_val_kitsune})
-    yi_test_kitsune = pd.DataFrame(data={'ensemble': y_test_kitsune, 'inference': y_pred_test_kitsune})
-    
-    yi_train_ciciot = pd.DataFrame(data={'ensemble': y_train_ciciot, 'inference': y_pred_train_ciciot})
-    yi_val_ciciot = pd.DataFrame(data={'ensemble': y_val_ciciot, 'inference': y_pred_val_ciciot})
-    yi_test_ciciot = pd.DataFrame(data={'ensemble': y_test_ciciot, 'inference': y_pred_test_ciciot})
     
     # plots
     y_kdd = np.concatenate((y_train_kdd, y_val_kdd, y_test_kdd), axis=0)
@@ -312,7 +265,7 @@ def get_lines(i, metric, filename, model="mlp"):
     axes[4].set_title("CICIOT")
     
     axes[0].legend(labels=["ensemble","inference"])
-    plt.savefig(filename+"_lines.png", dpi=300)  
+    plt.savefig(directory_plots + filename + "_lines.png", dpi=300)  
     
     
 def get_data_description(size, metric, filename):
@@ -418,4 +371,99 @@ def get_data_description(size, metric, filename):
             axes[i, 4].set_title("CICIOT")
         print("preping plot for candidate "+str(i)+" done")
     
-    plt.savefig(filename+"_description_" + metric + ".png", dpi=300)  
+    plt.savefig(directory_plots + filename + "_description_" + metric + ".png", dpi=300)  
+    
+
+def get_boxplot_data(i, metric, model = "mlp"):
+    if model!="mlp":
+       directory_outputs = "outputs_ext/"
+    else:
+       directory_outputs = "outputs/"
+        
+    
+    y_pred_test_ids = np.loadtxt(directory_outputs + ids + "_pred_test_"+metric+"_"+str(i)+".csv", delimiter=",")
+    
+    y_pred_test_nsl = np.loadtxt(directory_outputs + nsl +"_pred_test_"+metric+"_"+str(i)+".csv", delimiter=",")
+    
+    y_pred_test_kdd = np.loadtxt(directory_outputs + kdd +"_pred_test_"+metric+"_"+str(i)+".csv", delimiter=",")
+    
+    y_pred_test_kitsune = np.loadtxt(directory_outputs + kitsune +"_pred_test_"+metric+"_"+str(i)+".csv", delimiter=",")
+    
+    y_pred_test_ciciot = np.loadtxt(directory_outputs + ciciot +"_pred_test_"+metric+"_"+str(i)+".csv", delimiter=",")
+    
+    
+    XY_kdd_test = np.loadtxt(directory_data + kdd +"_test_latent_" + str(i) +".csv", delimiter=',')
+    y_test_kdd = XY_kdd_test[:, metrics[metric]]
+        
+    XY_nsl_test = np.loadtxt(directory_data + nsl + "_test_latent_" + str(i) +".csv", delimiter=',')
+    y_test_nsl = XY_nsl_test[:, metrics[metric]]
+        
+    XY_ids_test = np.loadtxt(directory_data + ids + "_test_latent_" + str(i) +".csv", delimiter=',')
+    y_test_ids = XY_ids_test[:, metrics[metric]]
+    
+    XY_kitsune_test = np.loadtxt(directory_data + kitsune + "_test_latent_" + str(i) +".csv", delimiter=',')
+    y_test_kitsune = XY_kitsune_test[:, metrics[metric]]
+    
+    XY_ciciot_test = np.loadtxt(directory_data + ciciot + "_test_latent_" + str(i) +".csv", delimiter=',')
+    y_test_ciciot = XY_ciciot_test[:, metrics[metric]]
+    
+    measure = "std" if metric=="std" else "entropy"
+    
+    result = [[mse(y_test_kdd, y_pred_test_kdd), pcc(y_test_kdd, y_pred_test_kdd)[0], scc(y_test_kdd, y_pred_test_kdd)[0], "KDD", measure]]
+    result.append([mse(y_test_nsl, y_pred_test_nsl), pcc(y_test_nsl, y_pred_test_nsl)[0], scc(y_test_nsl, y_pred_test_nsl)[0], "NSL", measure])
+    result.append([mse(y_test_ids, y_pred_test_ids), pcc(y_test_ids, y_pred_test_ids)[0], scc(y_test_ids, y_pred_test_ids)[0], "IDS", measure])
+    result.append([mse(y_test_kitsune, y_pred_test_kitsune), pcc(y_test_kitsune, y_pred_test_kitsune)[0], scc(y_test_kitsune, y_pred_test_kitsune)[0], "KITSUNE", measure])
+    result.append([mse(y_test_ciciot, y_pred_test_ciciot), pcc(y_test_ciciot, y_pred_test_ciciot)[0], scc(y_test_ciciot, y_pred_test_ciciot)[0], "CICIOT", measure])
+    
+    return result
+
+def get_boxplots(size):
+    columns = ["MSE", "PCC", "SCC", "DATA", "METRIC"]
+    results_mlp, results_rf = [], []
+    for i in range(size):
+        print("prepping data,  iteration "+str(i+1) +" starts ...")
+        results_mlp.extend(get_boxplot_data(i, "std", "mlp"))
+        results_mlp.extend(get_boxplot_data(i, "ent", "mlp"))
+        results_rf.extend(get_boxplot_data(i, "std", "rf"))
+        results_rf.extend(get_boxplot_data(i, "ent", "rf"))
+        print("prepping data,  iteration "+str(i+1) +" done.")
+    
+    data_mlp = pd.DataFrame(data = results_mlp, columns = columns)
+    data_rf = pd.DataFrame(data = results_rf, columns = columns)
+    
+    
+    # plots std
+    fig, axes = plt.subplots(3, 2, figsize=(9, 5), sharey=False)
+    sns.boxplot(ax=axes[0, 0], data=data_mlp, x="DATA", y="MSE", hue="METRIC")
+    axes[0, 0].set(xticklabels=[])
+    axes[0, 0].set_title("MLP ")
+    sns.boxplot(ax=axes[0, 1], data=data_rf, x="DATA", y="MSE", hue="METRIC")
+    axes[0, 1].set(xticklabels=[])
+    axes[0, 1].set_title("RF")
+    axes[0, 0].set(xlabel=None)
+    axes[0, 1].set(xlabel=None, ylabel=None)
+    axes[0, 0].legend(loc="upper right", title="")
+    axes[0, 0].get_legend().remove()
+    
+    sns.boxplot(ax=axes[1, 0], data=data_mlp, x="DATA", y="PCC", hue="METRIC")
+    sns.boxplot(ax=axes[1, 1], data=data_rf, x="DATA", y="PCC", hue="METRIC")
+    axes[1, 0].set(xlabel=None)
+    axes[1, 1].set(xlabel=None, ylabel=None)
+    axes[1, 0].set(xticklabels=[])
+    axes[1, 1].set(xticklabels=[])
+    axes[1, 0].get_legend().remove()
+    axes[1, 1].get_legend().remove()
+    
+    
+    sns.boxplot(ax=axes[2, 0], data=data_mlp, x="DATA", y="SCC", hue="METRIC")
+    sns.boxplot(ax=axes[2, 1], data=data_rf, x="DATA", y="SCC", hue="METRIC")
+    axes[2, 0].tick_params(axis='x', rotation=90)
+    axes[2, 1].tick_params(axis='x', rotation=90)
+    axes[2, 0].set(xlabel=None)
+    axes[2, 1].set(xlabel=None, ylabel=None)
+    axes[2, 0].get_legend().remove()
+    axes[2, 1].get_legend().remove()
+
+    plt.savefig(directory_plots + "boxplot" + ".png", dpi=300) 
+    
+    
