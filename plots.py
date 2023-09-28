@@ -436,6 +436,8 @@ def get_boxplots(size):
     fig, axes = plt.subplots(3, 2, figsize=(9, 5), sharey=False)
     sns.boxplot(ax=axes[0, 0], data=data_mlp, x="DATA", y="MSE", hue="METRIC")
     axes[0, 0].set(xticklabels=[])
+    print(help(axes[0, 0].get_legend()))
+    print(help(axes[0, 0].get_legend().set))
     axes[0, 0].set_title("MLP ")
     sns.boxplot(ax=axes[0, 1], data=data_rf, x="DATA", y="MSE", hue="METRIC")
     axes[0, 1].set(xticklabels=[])
@@ -444,6 +446,7 @@ def get_boxplots(size):
     axes[0, 1].set(xlabel=None, ylabel=None)
     axes[0, 0].legend(loc="upper right", title="")
     axes[0, 0].get_legend().remove()
+    axes[0, 1].get_legend().set(bbox_to_anchor=[1.005, 1])
     
     sns.boxplot(ax=axes[1, 0], data=data_mlp, x="DATA", y="PCC", hue="METRIC")
     sns.boxplot(ax=axes[1, 1], data=data_rf, x="DATA", y="PCC", hue="METRIC")
@@ -463,7 +466,8 @@ def get_boxplots(size):
     axes[2, 1].set(xlabel=None, ylabel=None)
     axes[2, 0].get_legend().remove()
     axes[2, 1].get_legend().remove()
-
+    plt.tight_layout()
     plt.savefig(directory_plots + "boxplot" + ".png", dpi=300) 
+    return data_mlp, data_rf
     
     
