@@ -15,6 +15,7 @@
 >> 
 >>  -b [BATCH_SIZE], --batch_size [BATCH_SIZE]
 >> 
+>>  -f, --random_forest_model    using random forest regression (default=False)
 >>  -l [LEARNING_RATE], --learning_rate [LEARNING_RATE]
 >> 
 >>  -w [WEIGHT_DECAY], --weight_decay [WEIGHT_DECAY]
@@ -30,5 +31,5 @@ python run.py -t -p
 ```
 
 ```
-python run.py -s -r
+python run.py -s -r -f
 ```
