@@ -48,7 +48,7 @@ def run_forest(max_depth, is_train_mlp):
     evaluate_forest()
 
 if __name__ == "__main__":
-   parser = argparse.ArgumentParser(description="CUQ-AE-REDM Framework for uncertainty quantification on AEs-based methods for anomaly detection",
+   parser = argparse.ArgumentParser(description="Regression-based UQ for OoD detection",
                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
    parser.add_argument("-s", "--reg_stage", action="store_true", help="regression_stage", default=False)
    parser.add_argument("-f", "--random_forest_model", action="store_true", help="random_forest_regression_stage", default=False)
