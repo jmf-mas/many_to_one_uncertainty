@@ -3,8 +3,6 @@ from sklearn.model_selection import train_test_split
 import pandas as pd
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import MinMaxScaler
-import glob
-from tqdm import tqdm
 pd.set_option('display.max_rows', 1000)
 
 cat_cols_nsl = ['is_host_login','protocol_type','service','flag','land', 'logged_in','is_guest_login', 'level', 'outcome']
@@ -232,7 +230,5 @@ def split_and_save_data():
     XY = np.loadtxt(data_directory+"ciciot.csv", delimiter=',')
     save_processed_data(XY, "ciciot", train_rate = .3, val_rate = 0.2)
     print("splitting data done")
-
-    
 
     
