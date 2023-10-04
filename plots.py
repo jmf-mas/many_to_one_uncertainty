@@ -469,5 +469,98 @@ def get_boxplots(size):
     plt.tight_layout()
     plt.savefig(directory_plots + "boxplot" + ".png", dpi=300) 
     return data_mlp, data_rf
+
+def get_uncertainty_distribution(i):
+    
+    
+    XY_kdd_train = np.loadtxt(directory_data + kdd + "_train_latent_" + str(i) +".csv", delimiter=',')
+    y_train_kdd_std, y_train_kdd_ent = XY_kdd_train[:, metrics["std"]], XY_kdd_train[:, metrics["ent"]]
+    XY_kdd_val = np.loadtxt(directory_data + kdd + "_val_latent_" + str(i) +".csv", delimiter=',')
+    y_val_kdd_std, y_val_kdd_ent = XY_kdd_val[:, metrics["std"]], XY_kdd_val[:, metrics["ent"]]
+    XY_kdd_test = np.loadtxt(directory_data + kdd +"_test_latent_" + str(i) +".csv", delimiter=',')
+    y_test_kdd_std, y_test_kdd_ent = XY_kdd_test[:, metrics["std"]], XY_kdd_test[:, metrics["ent"]]
+        
+    XY_nsl_train = np.loadtxt(directory_data + nsl + "_train_latent_" + str(i) +".csv", delimiter=',')
+    y_train_nsl_std, y_train_nsl_ent = XY_nsl_train[:, metrics["std"]], XY_nsl_train[:, metrics["ent"]]
+    XY_nsl_val = np.loadtxt(directory_data + nsl + "_val_latent_" + str(i) +".csv", delimiter=',')
+    y_val_nsl_std, y_val_nsl_ent = XY_nsl_val[:, metrics["std"]], XY_nsl_val[:, metrics["ent"]]
+    XY_nsl_test = np.loadtxt(directory_data + nsl + "_test_latent_" + str(i) +".csv", delimiter=',')
+    y_test_nsl_std, y_test_nsl_ent = XY_nsl_test[:, metrics["std"]], XY_nsl_test[:, metrics["ent"]]
+        
+    XY_ids_train = np.loadtxt(directory_data + ids + "_train_latent_" + str(i) +".csv", delimiter=',')
+    y_train_ids_std, y_train_ids_ent = XY_ids_train[:, metrics["std"]], XY_ids_train[:, metrics["ent"]]
+    XY_ids_val = np.loadtxt(directory_data + ids + "_val_latent_" + str(i) +".csv", delimiter=',')
+    y_val_ids_std, y_val_ids_ent = XY_ids_val[:, metrics["std"]], XY_ids_val[:, metrics["ent"]]
+    XY_ids_test = np.loadtxt(directory_data + ids + "_test_latent_" + str(i) +".csv", delimiter=',')
+    y_test_ids_std, y_test_ids_ent = XY_ids_test[:, metrics["std"]], XY_ids_test[:, metrics["ent"]]
+    
+    XY_kitsune_train = np.loadtxt(directory_data + kitsune + "_train_latent_" + str(i) +".csv", delimiter=',')
+    y_train_kitsune_std, y_train_kitsune_ent = XY_kitsune_train[:, metrics["std"]], XY_kitsune_train[:, metrics["ent"]]
+    XY_kitsune_val = np.loadtxt(directory_data + kitsune + "_val_latent_" + str(i) +".csv", delimiter=',')
+    y_val_kitsune_std, y_val_kitsune_ent = XY_kitsune_val[:, metrics["std"]], XY_kitsune_val[:, metrics["ent"]]
+    XY_kitsune_test = np.loadtxt(directory_data + kitsune + "_test_latent_" + str(i) +".csv", delimiter=',')
+    y_test_kitsune_std, y_test_kitsune_ent = XY_kitsune_test[:, metrics["std"]], XY_kitsune_test[:, metrics["ent"]]
+    
+    XY_ciciot_train = np.loadtxt(directory_data + ciciot + "_train_latent_" + str(i) +".csv", delimiter=',')
+    y_train_ciciot_std, y_train_ciciot_ent = XY_ciciot_train[:, metrics["std"]], XY_ciciot_train[:, metrics["ent"]]
+    XY_ciciot_val = np.loadtxt(directory_data + ciciot + "_val_latent_" + str(i) +".csv", delimiter=',')
+    y_val_ciciot_std, y_val_ciciot_ent = XY_ciciot_val[:, metrics["std"]], XY_ciciot_val[:, metrics["ent"]]
+    XY_ciciot_test = np.loadtxt(directory_data + ciciot + "_test_latent_" + str(i) +".csv", delimiter=',')
+    y_test_ciciot_std, y_test_ciciot_ent = XY_ciciot_test[:, metrics["std"]], XY_ciciot_test[:, metrics["ent"]]
+    
+    
+    # plots
+    y_kdd_std = np.concatenate((y_train_kdd_std, y_val_kdd_std, y_test_kdd_std), axis=0)
+    y_nsl_std = np.concatenate((y_train_nsl_std, y_val_nsl_std, y_test_nsl_std), axis=0)
+    y_ids_std = np.concatenate((y_train_ids_std, y_val_ids_std, y_test_ids_std), axis=0)
+    y_kitsune_std = np.concatenate((y_train_kitsune_std, y_val_kitsune_std, y_test_kitsune_std), axis=0)
+    y_ciciot_std = np.concatenate((y_train_ciciot_std, y_val_ciciot_std, y_test_ciciot_std), axis=0)
+    
+    y_kdd_ent = np.concatenate((y_train_kdd_ent, y_val_kdd_ent, y_test_kdd_ent), axis=0)
+    y_nsl_ent = np.concatenate((y_train_nsl_ent, y_val_nsl_ent, y_test_nsl_ent), axis=0)
+    y_ids_ent = np.concatenate((y_train_ids_ent, y_val_ids_ent, y_test_ids_ent), axis=0)
+    y_kitsune_ent = np.concatenate((y_train_kitsune_ent, y_val_kitsune_ent, y_test_kitsune_ent), axis=0)
+    y_ciciot_ent = np.concatenate((y_train_ciciot_ent, y_val_ciciot_ent, y_test_ciciot_ent), axis=0)
+    
+    
+    yi_kdd = pd.DataFrame(data={'std': y_kdd_std, 'ent': y_kdd_ent})
+    yi_nsl = pd.DataFrame(data={'std': y_nsl_std, 'ent': y_nsl_ent})
+    yi_ids = pd.DataFrame(data={'std': y_ids_std, 'ent': y_ids_ent})
+    yi_kitsune = pd.DataFrame(data={'std': y_kitsune_std, 'ent': y_kitsune_ent})
+    yi_ciciot = pd.DataFrame(data={'std': y_ciciot_std, 'ent': y_ciciot_ent})
+    # lines
+    fig, axes = plt.subplots(5, 2, figsize=(9, 9), sharey=False)
+    fig.subplots_adjust(hspace=0.5)
+    n = 400
+    yi_kdd = yi_kdd.sample(n = n)
+    yi_nsl = yi_nsl.sample(n = n)
+    yi_ids = yi_ids.sample(n = n)
+    yi_kitsune = yi_kitsune.sample(n = n)
+    yi_ciciot = yi_ciciot.sample(n = n)
+    sns.scatterplot(ax=axes[0, 0], x=yi_kdd.index, y='std', data=yi_kdd, color='blue')
+    sns.scatterplot(ax=axes[0, 1], x=yi_kdd.index, y='ent', data=yi_kdd, color='red')
+    sns.scatterplot(ax=axes[1, 0], x=yi_nsl.index, y='std', data=yi_nsl, color='blue')
+    sns.scatterplot(ax=axes[1, 1], x=yi_nsl.index, y='ent', data=yi_nsl, color='red')
+    sns.scatterplot(ax=axes[2, 0], x=yi_ids.index, y='std', data=yi_ids, color='blue')
+    sns.scatterplot(ax=axes[2, 1], x=yi_ids.index, y='ent', data=yi_ids, color='red')
+    sns.scatterplot(ax=axes[3, 0], x=yi_kitsune.index, y='std', data=yi_kitsune, color='blue')
+    sns.scatterplot(ax=axes[3, 1], x=yi_kitsune.index, y='ent', data=yi_kitsune, color='red')
+    sns.scatterplot(ax=axes[4, 0], x=yi_ciciot.index, y='std', data=yi_ciciot, color='blue')
+    sns.scatterplot(ax=axes[4, 1], x=yi_ciciot.index, y='ent', data=yi_ciciot, color='red')
+    for j in range(5):
+        axes[j, 0].set(xticklabels=[])
+        axes[j, 1].set(xticklabels=[])
+        axes[j, 0].set(xlabel= None, ylabel=None)
+        axes[j, 1].set(xlabel= None, ylabel=None)
+    
+    axes[0, 0].set_title("KDD")
+    axes[1, 0].set_title("NSL")
+    axes[2, 0].set_title("IDS")
+    axes[3, 0].set_title("KITSUNE")
+    axes[4, 0].set_title("CICIOT")
+    
+    axes[0, 0].legend(labels=["std","entropy"])
+    axes[0, 1].legend(labels=["entropy","std"])
+    plt.savefig(directory_plots  + "uncertainty_"+str(i)+".png", dpi=300)  
     
     
