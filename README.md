@@ -26,6 +26,8 @@
 >>  -e [EPOCHS], --epochs [EPOCHS]
 >>
 
+> Ensure that data sets are stored within a directory labeled data
+
 > example of use
 ```
 python run.py -t -p

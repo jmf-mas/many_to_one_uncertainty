@@ -29,6 +29,7 @@ class AE(nn.Module):
         encode = self.enc(x)
         decode = self.dec(encode)
         return decode
+
     
     def save(self):
         parent_name = "checkpoints"
